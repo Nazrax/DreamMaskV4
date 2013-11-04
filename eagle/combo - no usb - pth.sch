@@ -6905,9 +6905,11 @@ Source: 008-0260-0_E.pdf</description>
 <part name="C2" library="SparkFun-Capacitors" deviceset="CAP" device="0805"/>
 <part name="GND7" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
 <part name="GND8" library="SparkFun-Aesthetics" deviceset="GND" device=""/>
-<part name="SUPPLY8" library="SparkFun-Aesthetics" deviceset="VCC" device=""/>
 <part name="U2" library="SparkFun-DigitalIC" deviceset="ATMEGA328P_PDIP" device=""/>
 <part name="Q1" library="crystal" deviceset="CRYSTAL" device="TC26V"/>
+<part name="R6" library="rcl" deviceset="R-US_" device="M0805"/>
+<part name="R7" library="rcl" deviceset="R-US_" device="M0805"/>
+<part name="SUPPLY3" library="SparkFun-Aesthetics" deviceset="VCC" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -6951,9 +6953,11 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="C2" gate="G$1" x="68.58" y="68.58" rot="R180"/>
 <instance part="GND7" gate="1" x="68.58" y="58.42"/>
 <instance part="GND8" gate="1" x="96.52" y="-5.08" rot="R90"/>
-<instance part="SUPPLY8" gate="1" x="43.18" y="-2.54" rot="R90"/>
 <instance part="U2" gate="G$1" x="99.06" y="53.34"/>
 <instance part="Q1" gate="G$1" x="73.66" y="50.8" rot="R90"/>
+<instance part="R6" gate="G$1" x="127" y="86.36" rot="R90"/>
+<instance part="R7" gate="G$1" x="132.08" y="86.36" rot="R90"/>
+<instance part="SUPPLY3" gate="1" x="129.54" y="96.52"/>
 </instances>
 <busses>
 </busses>
@@ -7018,10 +7022,11 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="91.44" y1="-5.08" x2="93.98" y2="-5.08" width="0.1524" layer="91"/>
 <pinref part="U$4" gate="G$1" pin="LED-"/>
 <wire x1="83.82" y1="-10.16" x2="91.44" y2="-10.16" width="0.1524" layer="91"/>
-<wire x1="91.44" y1="-10.16" x2="91.44" y2="-5.08" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="-10.16" x2="91.44" y2="-7.62" width="0.1524" layer="91"/>
 <junction x="91.44" y="-5.08"/>
 <pinref part="GND8" gate="1" pin="GND"/>
 <pinref part="U$5" gate="G$1" pin="-"/>
+<wire x1="91.44" y1="-7.62" x2="91.44" y2="-5.08" width="0.1524" layer="91"/>
 <wire x1="81.28" y1="-20.32" x2="91.44" y2="-20.32" width="0.1524" layer="91"/>
 <wire x1="91.44" y1="-20.32" x2="91.44" y2="-10.16" width="0.1524" layer="91"/>
 <junction x="91.44" y="-10.16"/>
@@ -7029,6 +7034,13 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="81.28" y1="-30.48" x2="91.44" y2="-30.48" width="0.1524" layer="91"/>
 <wire x1="91.44" y1="-30.48" x2="91.44" y2="-20.32" width="0.1524" layer="91"/>
 <junction x="91.44" y="-20.32"/>
+<pinref part="U$4" gate="G$1" pin="EMITTER"/>
+<wire x1="83.82" y1="-7.62" x2="91.44" y2="-7.62" width="0.1524" layer="91"/>
+<junction x="91.44" y="-7.62"/>
+<pinref part="U$3" gate="G$1" pin="EMITTER"/>
+<wire x1="83.82" y1="5.08" x2="91.44" y2="5.08" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="5.08" x2="91.44" y2="2.54" width="0.1524" layer="91"/>
+<junction x="91.44" y="2.54"/>
 </segment>
 </net>
 <net name="VCC" class="0">
@@ -7076,15 +7088,15 @@ Source: 008-0260-0_E.pdf</description>
 <label x="30.48" y="20.32" size="1.778" layer="95"/>
 </segment>
 <segment>
-<pinref part="SUPPLY8" gate="1" pin="VCC"/>
-<wire x1="43.18" y1="-2.54" x2="48.26" y2="-2.54" width="0.1524" layer="91"/>
-<pinref part="U$4" gate="G$1" pin="COLLECTOR"/>
-<wire x1="48.26" y1="-2.54" x2="63.5" y2="-2.54" width="0.1524" layer="91"/>
-<wire x1="63.5" y1="-7.62" x2="68.58" y2="-7.62" width="0.1524" layer="91"/>
-<wire x1="63.5" y1="-2.54" x2="63.5" y2="-7.62" width="0.1524" layer="91"/>
-<wire x1="48.26" y1="-2.54" x2="48.26" y2="5.08" width="0.1524" layer="91"/>
-<pinref part="U$3" gate="G$1" pin="COLLECTOR"/>
-<wire x1="48.26" y1="5.08" x2="68.58" y2="5.08" width="0.1524" layer="91"/>
+<pinref part="R6" gate="G$1" pin="2"/>
+<wire x1="127" y1="91.44" x2="127" y2="93.98" width="0.1524" layer="91"/>
+<pinref part="R7" gate="G$1" pin="2"/>
+<wire x1="132.08" y1="91.44" x2="132.08" y2="93.98" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="93.98" x2="129.54" y2="93.98" width="0.1524" layer="91"/>
+<pinref part="SUPPLY3" gate="1" pin="VCC"/>
+<wire x1="129.54" y1="93.98" x2="127" y2="93.98" width="0.1524" layer="91"/>
+<wire x1="129.54" y1="93.98" x2="129.54" y2="96.52" width="0.1524" layer="91"/>
+<junction x="129.54" y="93.98"/>
 </segment>
 </net>
 <net name="N$4" class="0">
@@ -7229,26 +7241,34 @@ Source: 008-0260-0_E.pdf</description>
 </net>
 <net name="IRSENS1" class="0">
 <segment>
-<wire x1="124.46" y1="78.74" x2="129.54" y2="78.74" width="0.1524" layer="91"/>
-<label x="129.54" y="78.74" size="1.778" layer="95"/>
+<wire x1="124.46" y1="78.74" x2="132.08" y2="78.74" width="0.1524" layer="91"/>
+<label x="137.16" y="78.74" size="1.778" layer="95"/>
 <pinref part="U2" gate="G$1" pin="PC0(ADC0)"/>
+<wire x1="132.08" y1="78.74" x2="137.16" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="78.74" x2="132.08" y2="81.28" width="0.1524" layer="91"/>
+<junction x="132.08" y="78.74"/>
+<pinref part="R7" gate="G$1" pin="1"/>
 </segment>
 <segment>
-<pinref part="U$3" gate="G$1" pin="EMITTER"/>
-<wire x1="83.82" y1="5.08" x2="91.44" y2="5.08" width="0.1524" layer="91"/>
-<label x="91.44" y="5.08" size="1.778" layer="95"/>
+<pinref part="U$3" gate="G$1" pin="COLLECTOR"/>
+<wire x1="60.96" y1="5.08" x2="68.58" y2="5.08" width="0.1524" layer="91"/>
+<label x="60.96" y="7.62" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IRSENS2" class="0">
 <segment>
-<wire x1="124.46" y1="76.2" x2="129.54" y2="76.2" width="0.1524" layer="91"/>
-<label x="129.54" y="76.2" size="1.778" layer="95"/>
+<wire x1="124.46" y1="76.2" x2="127" y2="76.2" width="0.1524" layer="91"/>
+<label x="137.16" y="76.2" size="1.778" layer="95"/>
 <pinref part="U2" gate="G$1" pin="PC1(ADC1)"/>
+<wire x1="127" y1="76.2" x2="137.16" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="127" y1="76.2" x2="127" y2="81.28" width="0.1524" layer="91"/>
+<junction x="127" y="76.2"/>
+<pinref part="R6" gate="G$1" pin="1"/>
 </segment>
 <segment>
-<pinref part="U$4" gate="G$1" pin="EMITTER"/>
-<wire x1="83.82" y1="-7.62" x2="88.9" y2="-7.62" width="0.1524" layer="91"/>
-<label x="83.82" y="-7.62" size="1.778" layer="95"/>
+<pinref part="U$4" gate="G$1" pin="COLLECTOR"/>
+<wire x1="60.96" y1="-7.62" x2="68.58" y2="-7.62" width="0.1524" layer="91"/>
+<label x="60.96" y="-5.08" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="BTN1" class="0">

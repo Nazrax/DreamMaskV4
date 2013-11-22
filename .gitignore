@@ -1,0 +1,10 @@
+.emacs
+*.out
+*.out.map
+*.lst
+*.o
+*.hex
+*.jpg
+*.capdata
+data
+*.d

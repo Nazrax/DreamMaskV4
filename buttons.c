@@ -52,7 +52,18 @@ bool_t pressed(button_t *button) {
 }
 
 static void _update(button_t *button) {
-  button_state_t state = !(PIND & _BV(button->pin));
+  button_state_t state;
+  
+  if (button->port == PB) {
+    state = !(PINB & _BV(button->pin));
+  } else if (button->port == PC) {
+    state = !(PINC & _BV(button->pin));
+  } else if (button->port == PD) {
+    state = !(PIND & _BV(button->pin));
+  } else {
+    state = 0;
+    // ERROR
+  }
 
   if (state != button->current) {
     if (button->update_time + 1 < clock_ticks) {

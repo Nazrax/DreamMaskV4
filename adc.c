@@ -56,17 +56,17 @@ static inline void wait_and_adc(void) {
 
 static inline void adc_start(void) {
   //PORTD |= _BV(PORTD6); // Turn on IR LEDs
-  PORTD |= _BV(PORTD7); // Turn on IR LEDs
+  PORTC |= _BV(PORTC2) | _BV(PORTC3); // Turn on IR LEDs
 
   //ADMUX = _BV(REFS0); // Select first endpoint
-  ADMUX = _BV(REFS0) | _BV(MUX1) | _BV(MUX2); // Select first endpoint (ADC6)
+  ADMUX = _BV(REFS0); // Select first endpoint (ADC0)
   wait_and_adc();
 
   //ADMUX = _BV(REFS0) | _BV(MUX0); // Select next endpoint
-  ADMUX = _BV(REFS0) | _BV(MUX0) | _BV(MUX1) | _BV(MUX2); // Select next endpoint (ADC7)
+  ADMUX = _BV(REFS0) | _BV(MUX0); // Select next endpoint (ADC1)
   wait_and_adc();
 
-  //PORTD &= ~(_BV(PORTD6)); // Turn off IR LEDs
+  PORTD &= ~(_BV(PORTD6)); // Turn off IR LEDs
   PORTD &= ~(_BV(PORTD7)); // Turn off IR LEDs
 }
 

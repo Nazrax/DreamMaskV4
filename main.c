@@ -7,46 +7,62 @@
 #include "clock.h"
 #include "spi.h"
 #include "flash.h"
+#include "calib_32kHz.h"
 
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 
+#include <string.h>
+#include <stdio.h>
+
 // Function prototypes
 static void init_io(void);
 static void buttons_handle(void);
 
 static void init_io() {
-  DDRB |= _BV(DDB2); // Set SS as output
+  DDRB |= _BV(DDB1) | _BV(DDB2); // LEDs 1 & 2
+  DDRD |= _BV(DDD3); // LED 3
 
-  DDRB |= _BV(DDB0); // LED
-  DDRD |= _BV(DDD5) | _BV(DDD6) | _BV(DDD7); // IR LEDs
-  
-  PORTD |= _BV(PORTD2) | _BV(PORTD3); // Enable internal pullups on buttons
+  DDRC |= _BV(DDC2) | _BV(DDC3); // IR LEDs
+
+  PORTB |= _BV(PORTB0); // Button 1 pullup
+  PORTC |= _BV(PORTC5); // Button 2 pullup
+
 
   // Configure buttons
-  buttons[0].pin = PIND3;
-  buttons[1].pin = PIND2;
+  buttons[0].port = PB;
+  buttons[1].port = PC;
+  buttons[0].pin = PINB0;
+  buttons[1].pin = PINC5;
   buttonPresses = 0;
 
-  PCMSK2 = _BV(PCINT18) | _BV(PCINT19);
-  PCICR = _BV(PCIE2);
+  PCMSK0 = _BV(PCINT0); // Button 1 on pin 14/PB0 / PCINT0
+  PCMSK1 = _BV(PCINT13); // Button 2 on pin 28 / PC5 / PCINT13
+  
+  PCICR = _BV(PCIE0) | _BV(PCIE1);
 }
 
 
 int main(int argc, char** argv) {
   MCUSR = 0;
   //wdt_disable();
+
+  CLKPR = (1<<CLKPCE);        // set Clock Prescaler Change Enable
+  CLKPR = _BV(CLKPS0); // Divide by 2, 4 MHz
+  DoCalibrate();
+
   wdt_enable(WDTO_4S);
 
-  CLKPR = (1<<CLKPCE); // set Clock Prescaler Change Enable
-  CLKPR = 0;           // No prescaling
-
-  //PORTB |= _BV(PORTB0); // Turn on LEDs
+  //CLKPR = (1<<CLKPCE); // set Clock Prescaler Change Enable
+  //CLKPR = 0;           // No prescaling
 
   init_io();
 
+  // Turn on LEDs
+  PORTB |= _BV(PORTB1) | _BV(PORTB2);
+  PORTD |= _BV(PORTD3);
 
   usart_init();
   sei();
@@ -72,6 +88,7 @@ int main(int argc, char** argv) {
   flag_want_adc = true;
 
   while(true) {
+    PORTD ^= _BV(PORTD3);
     clock_update();
 
     buttons_update();
@@ -90,12 +107,42 @@ int main(int argc, char** argv) {
 }
 
 static void buttons_handle() {
-  if (pressed(&buttons[0]) || pressed(&buttons[1])) {
+  if (PINC & _BV(PINC5)) {
+    PORTB |= _BV(PORTB1);
+  } else {
+    PORTB &= ~(_BV(PORTB1));
+  }
+
+  /*
+  if (PINB & _BV(PINB0)) {
+    PORTB |= _BV(PORTB2);
+  } else {
+    PORTB &= ~(_BV(PORTB2));
+  }
+  */
+  if (pressed(&buttons[0])) {
     buttonPresses++;
-    strcpy_P(serial_out, PSTR("Button pressed\r\n"));
+    strcpy_P(serial_out, PSTR("Button 0 pressed\r\n"));
+    //PORTB ^= _BV(PORTB1);
     usart_send();
     while (flag_serial_sending);
   }
+
+  if (pressed(&buttons[1])) {
+    buttonPresses++;
+    strcpy_P(serial_out, PSTR("Button 1 pressed\r\n"));
+    //PORTB ^= _BV(PORTB2);
+    usart_send();
+    while (flag_serial_sending);
+  }
+}
+
+ISR(PCINT0_vect) {
+  buttons_update();
+}
+
+ISR(PCINT1_vect) {
+  buttons_update();
 }
 
 ISR(PCINT2_vect) {

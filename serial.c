@@ -73,9 +73,6 @@ static void prepare_packet(void) {
   }
 
   if (flash_buf[2] == 0xFF || flash_full()) {
-    PORTB ^= _BV(PORTB0); // Turn on LEDs
-
-
     serial_out[0] = EOT;
     serial_out[1] = '\0';
   } else {

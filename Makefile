@@ -32,7 +32,7 @@ PROJECTNAME=DreamMaskV4
 # (list all files to compile, e.g. 'a.c b.cpp as.S'):
 # Use .cc, .cpp or .C suffix for C++ files, use .S 
 # (NOT .s !!!) for assembly source code files.
-PRJSRC=main.c power.c clock.c serial.c flash.c spi.c commands.c adc.c buttons.c
+PRJSRC=main.c power.c clock.c serial.c flash.c spi.c commands.c adc.c buttons.c calib_32kHz.c
 
 # additional includes (e.g. -I/path/to/mydir)
 #INC=-I/path/to/include
@@ -173,7 +173,7 @@ hex: $(HEXTRG)
 
 
 writeflash: hex
-	$(AVRDUDE) -c $(AVRDUDE_PROGRAMMERID)   \
+	$(AVRDUDE) -B2 -c $(AVRDUDE_PROGRAMMERID)   \
 	 -p $(PROGRAMMER_MCU) -P $(AVRDUDE_PORT) -e        \
 	 -U flash:w:$(HEXROMTRG)
 

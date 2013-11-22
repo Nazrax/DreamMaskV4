@@ -19,9 +19,9 @@ void flash_wait_for_idle(void);
 bool_t flash_busy(void);
 
 void flash_init(void) {
-  DDRB |= _BV(DDB1); // /CS
+  DDRC |= _BV(DDC4); // /CS
 
-  strcpy_P(serial_out, PSTR("\r\Flash initialized\r\n"));
+  strcpy_P(serial_out, PSTR("\r\nFlash initialized\r\n"));
   usart_send();
   while (flag_serial_sending);
 

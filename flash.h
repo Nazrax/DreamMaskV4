@@ -22,8 +22,8 @@
 #define STATUS_BUSY 0x01
 #define STATUS_WEL  0x02
 
-#define flash_select() PORTB &= ~(_BV(PORTB1))
-#define flash_deselect() PORTB |= _BV(PORTB1)
+#define flash_select() PORTC &= ~(_BV(PORTC4))
+#define flash_deselect() PORTC |= _BV(PORTC4)
 
 #define flash_powerdown() flash_select();spi_send(INSTR_POWERDOWN);flash_deselect();
 #define flash_powerup() flash_select();spi_send(INSTR_POWERUP);flash_deselect();

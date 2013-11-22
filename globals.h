@@ -1,12 +1,12 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
-#define F_CPU 16000000 // 16 MhZ clock
+#define F_CPU 3686400 // 3.6864 MhZ clock
 
 #include <avr/io.h>
 #include "types.h"
 
-#define USART_BAUDRATE 500000
+#define USART_BAUDRATE 230400
 #define BAUD_VALUE (((F_CPU / (USART_BAUDRATE * 16))) - 1)
 
 #define BUTTON_COUNT 2

@@ -10,7 +10,7 @@ clock_t clock;
 void clock_init() {
   TCCR1B = _BV(WGM12); // CTC Mode
   TCCR1B |= _BV(CS11) | _BV(CS10); // fCPU / 64
-  OCR1A = 31250; // 8 ticks / second
+  OCR1A = 7200; // 8 ticks / second
   TIMSK1 |= _BV(OCIE1A); // Enable CTC interrupt for OCR1A
 
   /*
@@ -44,6 +44,11 @@ void clock_update() {
 // The clock
 ISR(TIMER1_COMPA_vect) {
   clock_ticks++;
+
+  //  if (clock_ticks % 4 == 0) {
+    PORTB ^= _BV(PORTB2);
+    //}
+
   clock.subseconds++;
   if (flag_want_adc && !flag_xmodem_sending) { // Read every clock tick (8 times / second)
     flag_do_adc = true;

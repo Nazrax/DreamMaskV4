@@ -2,6 +2,7 @@
 #include "commands.h"
 #include "serial.h"
 #include "flash.h"
+#include "alarm.h"
 //#include "sensor.h"
 
 #include <avr/io.h>
@@ -45,6 +46,9 @@ void handle_command() {
     handle_flash_verb();
   } else if (!strncmp_P((char*)serial_in, PSTR("ADC"), 3)) {
     handle_adc();
+  } else if (!strncmp_P((char*)serial_in, PSTR("ALARM"), 4)) {
+    p += strlcpy_P(p, cmdresult, 64);
+    p += sprintf(p, " %d", alarm_time);
   } else if (!strncmp_P((char*)serial_in, PSTR("SCAN"), 4)) {
     flash_scan();
     p += strlcpy_P(p, cmdresult, 64);

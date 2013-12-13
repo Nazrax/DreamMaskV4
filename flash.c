@@ -48,8 +48,9 @@ void flash_condwrite() {
     //bool_t nonzero = false;
 
     if (flag_flash_verbose) {
-      sprintf(serial_out, "\r\nSaving to flash at %d %ld\r\n", flash_addr, clock_ticks);
+      sprintf(serial_out, "\r\ncondwrite to flash at %d %ld\r\n", flash_addr, clock_ticks);
       usart_send();
+      while (flag_serial_sending);
     }
     flash_write(flash_addr++);
     flash_buf_ctr = 0;
@@ -73,6 +74,7 @@ void flash_scan() {
   if (flag_flash_verbose) {
     strcpy_P(serial_out, PSTR("\r\nPowering up flash\r\n"));
     usart_send();
+    while (flag_serial_sending);
   }
 
   flash_powerup();
@@ -80,6 +82,7 @@ void flash_scan() {
   if (flag_flash_verbose) {
     strcpy_P(serial_out, PSTR("\r\nWaiting for idle\r\n"));
     usart_send();
+    while (flag_serial_sending);
   }
 
   flash_wait_for_idle();
@@ -112,6 +115,13 @@ void flash_enable_write(void) {
 void flash_write(uint16_t addr) {
   int i;
   uint8_t retval;
+
+  if (flag_flash_verbose) {
+    sprintf(serial_out, "\r\nwrite to flash at %d %ld\r\n", flash_addr, clock_ticks);
+    usart_send();
+    while (flag_serial_sending);
+  }
+
 
   do {
     flash_powerup();

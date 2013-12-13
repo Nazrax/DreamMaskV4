@@ -8,6 +8,7 @@
 #include "spi.h"
 #include "flash.h"
 #include "calib_32kHz.h"
+#include "alarm.h"
 
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
@@ -61,8 +62,16 @@ int main(int argc, char** argv) {
   init_io();
 
   // Turn on LEDs
-  PORTB |= _BV(PORTB1) | _BV(PORTB2);
-  PORTD |= _BV(PORTD3);
+  led_on(0);
+  led_on(1);
+  led_on(2);
+  _delay_ms(1000);
+  led_off(0);
+  led_off(1);
+  led_off(2);
+  
+  //PORTB |= _BV(PORTB1) | _BV(PORTB2);
+  //PORTD |= _BV(PORTD3);
 
   usart_init();
   sei();
@@ -71,6 +80,7 @@ int main(int argc, char** argv) {
   clock_init();
   spi_init();
   flash_init();
+  alarm_init();
 
   strcpy_P(serial_out, PSTR("Scanning flash!\r\n"));
   usart_send();
@@ -88,11 +98,18 @@ int main(int argc, char** argv) {
   flag_want_adc = true;
 
   while(true) {
-    PORTD ^= _BV(PORTD3);
+    //PORTD ^= _BV(PORTD3);
     clock_update();
 
     buttons_update();
     buttons_handle();
+
+    alarm_handle();
+
+    if (!alarm_active) {
+      led_off(0);
+      led_off(1);
+    }
 
     adc_dostuff();
     usart_dostuff();
@@ -100,39 +117,32 @@ int main(int argc, char** argv) {
     buttons_age();
 
     wdt_reset();
-    power_sleep();
+    power_idle();
   }
 
   return 0;
 }
 
 static void buttons_handle() {
-  if (PINC & _BV(PINC5)) {
-    PORTB |= _BV(PORTB1);
-  } else {
-    PORTB &= ~(_BV(PORTB1));
-  }
+  if (pressed(&buttons[0]) || pressed(&buttons[1])) {
+    if (alarm_active == true) { // || (alarm_time - clock.tseconds) < 300) {
+      alarm_time = clock.tseconds + 60*60*10;
+    } else {
+      alarm_snooze();
+    }
+  } 
 
-  /*
-  if (PINB & _BV(PINB0)) {
-    PORTB |= _BV(PORTB2);
-  } else {
-    PORTB &= ~(_BV(PORTB2));
-  }
-  */
   if (pressed(&buttons[0])) {
     buttonPresses++;
-    strcpy_P(serial_out, PSTR("Button 0 pressed\r\n"));
-    //PORTB ^= _BV(PORTB1);
-    usart_send();
+    //strcpy_P(serial_out, PSTR("Button 0 pressed\r\n"));
+    //usart_send();
     while (flag_serial_sending);
   }
 
   if (pressed(&buttons[1])) {
     buttonPresses++;
-    strcpy_P(serial_out, PSTR("Button 1 pressed\r\n"));
-    //PORTB ^= _BV(PORTB2);
-    usart_send();
+    //strcpy_P(serial_out, PSTR("Button 1 pressed\r\n"));
+    //usart_send();
     while (flag_serial_sending);
   }
 }

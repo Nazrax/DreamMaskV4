@@ -26,11 +26,10 @@ void adc_init(void) {
 // Let the LEDs and ADC mux settle out
 static inline void wait_and_adc(void) {
   // Turn on timer for delay
-  TCNT2 = 0;
-  TCCR2A = _BV(WGM21); // CTC Mode
-  TCCR2B = _BV(CS22) | _BV(CS21) | _BV(CS20); // fCPU/1024 = 15625 ticks / second
-  OCR2A = 10; // Just over 1500 interrupts / second
-  TIMSK2 |= _BV(OCIE2A); // Enable CTC interrupt for OCR1A
+  TCNT1 = 0;
+  TCCR1B = _BV(WGM12) | _BV(CS20); // CTC Mode, no prescaling
+  OCR1A = 2458; // Around 1500 interrupts / second
+  TIMSK1 |= _BV(OCIE1A); // Enable CTC interrupt for OCR1A
 
   // Wait for the delay
   adc_ready = false;
@@ -51,23 +50,19 @@ static inline void wait_and_adc(void) {
   ADCSRA &= ~(_BV(ADEN)); // Disable ADC
 
   SMCR = 0; // Disable sleep
-  TCCR2B = 0; // Stop the timer
+  TCCR1B = 0; // Stop the timer
 }
 
 static inline void adc_start(void) {
-  //PORTD |= _BV(PORTD6); // Turn on IR LEDs
   PORTC |= _BV(PORTC2) | _BV(PORTC3); // Turn on IR LEDs
 
-  //ADMUX = _BV(REFS0); // Select first endpoint
   ADMUX = _BV(REFS0); // Select first endpoint (ADC0)
   wait_and_adc();
 
-  //ADMUX = _BV(REFS0) | _BV(MUX0); // Select next endpoint
   ADMUX = _BV(REFS0) | _BV(MUX0); // Select next endpoint (ADC1)
   wait_and_adc();
 
-  PORTD &= ~(_BV(PORTD6)); // Turn off IR LEDs
-  PORTD &= ~(_BV(PORTD7)); // Turn off IR LEDs
+  PORTC &= ~(_BV(PORTC2) | _BV(PORTC3)); // Turn off IR LEDs
 }
 
 void adc_dostuff(void) {
@@ -81,12 +76,12 @@ void adc_dostuff(void) {
   }
 
   if (flash_buf_ctr > 255) {
-    if (flag_adc_verbose) {
+    if (flag_adc_verbose || flag_flash_verbose) {
       strcpy_P(serial_out, PSTR("Dumping\r\n"));
       usart_send();
       while (flag_serial_sending);
-      flag_want_header = true;
     }
+    flag_want_header = true;
     flash_write(flash_addr++);
     flash_buf_ctr = 0;
   }
@@ -96,7 +91,7 @@ ISR(ADC_vect) {
   uint16_t reading = 1024 - ADC;
   if (flag_adc_verbose) {
     if (ADMUX & _BV(MUX0)) { // Just did ADC1
-      sprintf(serial_out, "%s %d\r\n", serial_out, reading);
+      sprintf(serial_out, "%s %d %d\r\n", serial_out, reading, buttonPresses);
       usart_send();
     } else { // Just did ADC0
       sprintf(serial_out, "%04ld %d", clock_ticks, reading);
@@ -139,6 +134,6 @@ ISR(ADC_vect) {
   adc_finished = true;
 }
 
-ISR(TIMER2_COMPA_vect) {
+ISR(TIMER1_COMPA_vect) {
   adc_ready = true;
 }

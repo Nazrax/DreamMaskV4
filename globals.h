@@ -1,12 +1,15 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
+//#define DEBUG 1
+
 #define F_CPU 3686400 // 3.6864 MhZ clock
 
 #include <avr/io.h>
 #include "types.h"
 
 #define USART_BAUDRATE 230400
+//#define USART_BAUDRATE 57600
 #define BAUD_VALUE (((F_CPU / (USART_BAUDRATE * 16))) - 1)
 
 #define BUTTON_COUNT 2
@@ -34,6 +37,8 @@
 #define ADC_VERBOSE GPIOR1, 6
 #define FLASH_VERBOSE GPIOR1, 7
 
+// GPIOR2
+#define ALARM_ACTIVE GPIOR2, 0
 
 // Flags
 #define flag_serial_sending REGISTER_BIT(SERIAL_SENDING)
@@ -52,6 +57,8 @@
 #define flag_spi_verbose REGISTER_BIT(SPI_VERBOSE)
 #define flag_adc_verbose REGISTER_BIT(ADC_VERBOSE)
 #define flag_flash_verbose REGISTER_BIT(FLASH_VERBOSE)
+
+#define alarm_active REGISTER_BIT(ALARM_ACTIVE)
 
 // Clock stuff
 extern clock_t clock;

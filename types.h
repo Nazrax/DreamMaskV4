@@ -9,6 +9,7 @@ typedef struct {
   unsigned char seconds:6;
   unsigned char minutes:6;
   unsigned char hours:5;
+  uint16_t tseconds;
 } clock_t;
 
 typedef struct

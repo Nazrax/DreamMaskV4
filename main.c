@@ -9,6 +9,7 @@
 #include "flash.h"
 #include "calib_32kHz.h"
 #include "alarm.h"
+#include "leds.h"
 
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
@@ -54,21 +55,24 @@ int main(int argc, char** argv) {
   CLKPR = _BV(CLKPS0); // Divide by 2, 4 MHz
   DoCalibrate();
 
-  wdt_enable(WDTO_4S);
+  wdt_enable(WDTO_8S);
 
   //CLKPR = (1<<CLKPCE); // set Clock Prescaler Change Enable
   //CLKPR = 0;           // No prescaling
 
   init_io();
 
+  led_init();
+
   // Turn on LEDs
-  led_on(0);
-  led_on(1);
-  led_on(2);
-  _delay_ms(1000);
-  led_off(0);
-  led_off(1);
-  led_off(2);
+  led_reset();
+  led_want(0);
+  led_want(1);
+  led_want(2);
+  led_handle();
+  _delay_ms(2000);
+  led_reset();
+  led_handle();
   
   //PORTB |= _BV(PORTB1) | _BV(PORTB2);
   //PORTD |= _BV(PORTD3);
@@ -101,18 +105,22 @@ int main(int argc, char** argv) {
     //PORTD ^= _BV(PORTD3);
     clock_update();
 
+    led_reset();
+
     buttons_update();
     buttons_handle();
 
-    alarm_handle();
+    //alarm_handle();
 
-    if (!alarm_active) {
-      led_off(0);
-      led_off(1);
-    }
+    //if (!alarm_active) {
+    //  led_off(0);
+    //  led_off(1);
+    //}
 
     adc_dostuff();
     usart_dostuff();
+
+    led_handle();
 
     buttons_age();
 
@@ -124,12 +132,33 @@ int main(int argc, char** argv) {
 }
 
 static void buttons_handle() {
+  if (!flag_want_adc && clock.tseconds > 1 && (pressed(&buttons[0]) || pressed(&buttons[1]))) {
+    flag_want_adc = true;
+    cli();
+    clock.tseconds = 0;
+    clock.subseconds = 0;
+    clock.seconds = 0;
+    clock.minutes = 0;
+    clock.hours = 0;
+    sei();
+  }
+
+  if (buttons[1].current || buttons[1].current) {
+    led_want(0);
+    led_want(1);
+    led_want(2);
+  }
+
   if (pressed(&buttons[0]) || pressed(&buttons[1])) {
+    alarm_snooze();
+    led_power = 1;
+    /*
     if (alarm_active == true) { // || (alarm_time - clock.tseconds) < 300) {
       alarm_time = clock.tseconds + 60*60*10;
     } else {
       alarm_snooze();
     }
+    */
   } 
 
   if (pressed(&buttons[0])) {

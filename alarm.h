@@ -18,11 +18,11 @@
 */
 
 
-#define INITIAL_ALARM_TIME (18600) // 5 hours (60 * 60 * 5) + 10 minutes
+#define INITIAL_ALARM_TIME (60 * 60 * 8 + 60 * 15) // 5 hours (60 * 60 * 5) + 15 minutes
 //#define INITIAL_ALARM_TIME (15)
-#define ALARM_ACTIVE_TIME (30)
-#define ALARM_WAIT_TIME (30)
-#define SNOOZE_TIME (5400) // 1.5 hours
+#define ALARM_ACTIVE_TIME (15)
+#define ALARM_WAIT_TIME (15)
+#define SNOOZE_TIME (60 * 20) // 20 minutes
 
 
 

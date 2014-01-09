@@ -24,21 +24,27 @@ void alarm_handle(void) {
     if (clock.tseconds - alarm_time < ALARM_ACTIVE_TIME) {
       alarm_active = true;
       if (clock.subseconds > 3) {
-        led_off(0);
-        led_off(1);
+        //led_off(0);
+        //led_off(1);
       } else {
         if (clock.seconds % 2 == 0) {
-          led_on(0);
-          led_off(1);
+          led_want(0);
+          //led_off(1);
         } else {
-          led_on(1);
-          led_off(0);
+          led_want(1);
+          //led_off(0);
         }
       }
     } else {
       alarm_active = false;
       alarm_time = clock.tseconds + ALARM_WAIT_TIME;
-      led_power++;
+      if (led_power < 10) {
+	led_power++;
+      } else if (led_power < 127) {
+	led_power *= 2;
+      } else {
+	led_power = 254;
+      }
     }
   } else {
     alarm_active = false;

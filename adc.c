@@ -26,10 +26,11 @@ void adc_init(void) {
 // Let the LEDs and ADC mux settle out
 static inline void wait_and_adc(void) {
   // Turn on timer for delay
-  TCNT1 = 0;
-  TCCR1B = _BV(WGM12) | _BV(CS20); // CTC Mode, no prescaling
-  OCR1A = 2458; // Around 1500 interrupts / second
-  TIMSK1 |= _BV(OCIE1A); // Enable CTC interrupt for OCR1A
+  TCNT0 = 0;
+  TCCR0A = _BV(WGM01); // CTC Mode
+  TCCR0B = _BV(CS00) | _BV(CS01); // clock / 64
+  OCR0A = 39; // Around 1500 interrupts / second
+  TIMSK0 |= _BV(OCIE0A); // Enable CTC interrupt for OCR1A
 
   // Wait for the delay
   adc_ready = false;
@@ -50,7 +51,8 @@ static inline void wait_and_adc(void) {
   ADCSRA &= ~(_BV(ADEN)); // Disable ADC
 
   SMCR = 0; // Disable sleep
-  TCCR1B = 0; // Stop the timer
+  TCCR0A = 0; // Stop the timer
+  TCCR0B = 0; // Stop the timer
 }
 
 static inline void adc_start(void) {
@@ -134,6 +136,6 @@ ISR(ADC_vect) {
   adc_finished = true;
 }
 
-ISR(TIMER1_COMPA_vect) {
+ISR(TIMER0_COMPA_vect) {
   adc_ready = true;
 }

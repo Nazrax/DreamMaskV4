@@ -64,7 +64,7 @@ uint8_t flash_status(void) {
   spi_send(INSTR_READ_STATUS1);
   status = spi_send(DONTCARE);
   flash_deselect();
-  wdt_reset();
+  //wdt_reset();
   return status;
 }
 

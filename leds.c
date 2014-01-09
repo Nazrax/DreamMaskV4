@@ -6,23 +6,53 @@ uint8_t led_power = 254;
 #else
 //uint8_t led_power = 7;
 //uint8_t led_power = 1;
-uint8_t led_power = 254;
+uint8_t led_power = 1;
 #endif
 
+bool_t want_led[3];
+
+void led_on(uint8_t led);
+void led_off(uint8_t led);
+
+
+void led_reset(void) {
+  int i;
+  for(i=0; i<3; i++) {
+    want_led[i] = false;
+  }
+}
+
+void led_want(uint8_t i) {
+  want_led[i] = true;
+}
+
+void led_handle(void) {
+  int i;
+  for(i=0; i<3; i++) {
+    if (want_led[i]) {
+      led_on(i);
+    } else {
+      led_off(i);
+    }
+  }
+}
+
 void led_init(void) {
-  TCCR0A = _BV(WGM01) | _BV(WGM00); // fast pwm mode
-  TCCR0B = _BV(CS00); // clock, no scaling
+  // fast pwm mode (8 bit)
+  // clock, no scaling
+  TCCR1A = _BV(WGM10);
+  TCCR1B = _BV(WGM12) | _BV(CS10);
 }
 
 void led_on(uint8_t led) {
   if (led == 0) {
     //PORTB |= _BV(PORTB1);
-    OCR0A = led_power;
-    TCCR0A |= _BV(COM0A1);
+    OCR1A = led_power;
+    TCCR1A |= _BV(COM1A1);
   } else if (led == 1) {
     //PORTB |= _BV(PORTB2);
-    OCR0B = led_power;
-    TCCR0A |= _BV(COM0B1);
+    OCR1B = led_power;
+    TCCR1A |= _BV(COM1B1);
   } else if (led == 2) {
     PORTD |= _BV(PORTD3);
   }
@@ -31,36 +61,11 @@ void led_on(uint8_t led) {
 void led_off(uint8_t led) {
   if (led == 0) {
     //PORTB &= ~(_BV(PORTB1));
-    TCCR0A &= ~(_BV(COM0A1));
+    TCCR1A &= ~(_BV(COM1A1));
   } else if (led == 1) {
     //PORTB &= ~(_BV(PORTB2));
-    TCCR0A &= ~(_BV(COM0B1));
+    TCCR1A &= ~(_BV(COM1B1));
   } else if (led == 2) {
     PORTD &= ~(_BV(PORTD3));
   }
 }
-
-/*
-void led_on(uint8_t led) {
-  if (led == 0) {
-    PORTB |= _BV(PORTB0);
-    OCR0A = led_power;
-    TCCR0A |= _BV(COM0A1);
-  } else if (led == 1) {
-    PORTB |= _BV(PORTB1);
-    OCR0B = led_power;
-    TCCR0A |= _BV(COM0B1);
-  } else if (led == 2) {
-  }
-}
-
-void led_off(uint8_t led) {
-  if (led == 0) {
-    PORTB &= ~(_BV(PORTB0));
-    TCCR0A &= ~(_BV(COM0A1) | _BV(COM0A0));
-  } else {
-    PORTB &= ~(_BV(PORTB1));
-    TCCR0A &= ~(_BV(COM0B1) | _BV(COM0B0));
-  }
-}
-*/

@@ -10,16 +10,25 @@ uint8_t led_power = 1;
 #endif
 
 bool_t want_led[3];
+bool_t leds_blocked;
 
 void led_on(uint8_t led);
 void led_off(uint8_t led);
 
+void led_block() {
+  leds_blocked = true;
+}
+
+void led_unblock() {
+  leds_blocked = false;
+}
 
 void led_reset(void) {
   int i;
   for(i=0; i<3; i++) {
     want_led[i] = false;
   }
+  leds_blocked = false;
 }
 
 void led_want(uint8_t i) {
@@ -29,10 +38,12 @@ void led_want(uint8_t i) {
 void led_handle(void) {
   int i;
   for(i=0; i<3; i++) {
-    if (want_led[i]) {
-      led_on(i);
-    } else {
-      led_off(i);
+    if (i == 2 || !leds_blocked) {
+      if (want_led[i]) {
+	led_on(i);
+      } else {
+	led_off(i);
+      }
     }
   }
 }

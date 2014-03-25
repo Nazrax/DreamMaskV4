@@ -2,6 +2,7 @@
 
 #include "flash.h"
 #include "serial.h"
+#include "leds.h"
 
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -17,6 +18,8 @@ static inline void adc_start(void);
 
 static volatile bool_t adc_ready;
 static volatile bool_t adc_finished;
+
+uint16_t adc_min, adc_max;
 
 void adc_init(void) {
   ADMUX = _BV(REFS0) | _BV(MUX0);
@@ -34,7 +37,7 @@ static inline void wait_and_adc(void) {
 
   // Wait for the delay
   adc_ready = false;
-
+  
   while(!adc_ready) {
     SMCR = _BV(SE); // Enable sleep mode + Idle
     sleep_cpu();
@@ -57,6 +60,8 @@ static inline void wait_and_adc(void) {
 
 static inline void adc_start(void) {
   PORTC |= _BV(PORTC2) | _BV(PORTC3); // Turn on IR LEDs
+  led_block(); // Turn off visible LEDs
+  led_handle();
 
   ADMUX = _BV(REFS0); // Select first endpoint (ADC0)
   wait_and_adc();
@@ -65,6 +70,8 @@ static inline void adc_start(void) {
   wait_and_adc();
 
   PORTC &= ~(_BV(PORTC2) | _BV(PORTC3)); // Turn off IR LEDs
+  led_unblock(); // Turn on visible LEDs
+  led_handle();
 }
 
 void adc_dostuff(void) {
@@ -93,11 +100,21 @@ ISR(ADC_vect) {
   uint16_t reading = 1024 - ADC;
   if (flag_adc_verbose) {
     if (ADMUX & _BV(MUX0)) { // Just did ADC1
-      sprintf(serial_out, "%s %d %d\r\n", serial_out, reading, buttonPresses);
+      sprintf(serial_out, "%s %d %d %d %d %d\r\n", serial_out, reading, buttonPresses, adc_min, adc_max, led_power);
       usart_send();
     } else { // Just did ADC0
       sprintf(serial_out, "%04ld %d", clock_ticks, reading);
+      if (adc_min > reading) {
+	adc_min = reading;
+      }
+      if (adc_max < reading) {
+	adc_max = reading;
+      }
     }
+  }
+
+  if (!(ADMUX & _BV(MUX0))) { // Just did ADC1
+    led_power = 1.0 * (reading - adc_min) / (adc_max - adc_min) * 180 + 64;
   }
 
   /*

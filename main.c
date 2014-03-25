@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 
+extern uint16_t adc_min, adc_max;
+
 // Function prototypes
 static void init_io(void);
 static void buttons_handle(void);
@@ -150,6 +152,9 @@ static void buttons_handle() {
   }
 
   if (pressed(&buttons[0]) || pressed(&buttons[1])) {
+    adc_min = 1023;
+    adc_max = 0;
+
     alarm_snooze();
     led_power = 1;
     /*

@@ -6,5 +6,8 @@
 *.hex
 *.jpg
 *.capdata
-data
+data/parsed
+data/raw
 *.d
+todo.txt
+Shopping List.ods

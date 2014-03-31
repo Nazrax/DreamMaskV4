@@ -3,6 +3,7 @@
 #include "serial.h"
 #include "flash.h"
 #include "alarm.h"
+#include "morse.h"
 //#include "sensor.h"
 
 #include <avr/io.h>
@@ -70,6 +71,10 @@ void handle_command() {
     flash_deselect();
     p += strlcpy_P(p, cmdresult, 64);
     p += strlcpy_P(p, PSTR("Flash Deselected"), 64);
+  } else if (!strncmp_P((char*)serial_in, PSTR("MORSE"), 5)) {
+    strcpy_P(morse_out, PSTR("DREAM"));
+    morse_send();
+    p += strlcpy_P(p, PSTR("\n\rMorsing"), 64);
   } else if (!strncmp_P((char*)serial_in, PSTR("BUF"), 3)) {
       handle_buf();
   } else if (!strncmp_P((char*)serial_in, PSTR("RESET"), 5)) {
@@ -86,6 +91,7 @@ void handle_command() {
 
   strcpy_P(p, prompt);
   usart_send();
+  while (flag_serial_sending);
 
   serial_in_ctr = 0;
   flag_command_ready = false;

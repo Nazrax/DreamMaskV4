@@ -10,6 +10,7 @@
 #include "calib_32kHz.h"
 #include "alarm.h"
 #include "leds.h"
+#include "morse.h"
 
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
@@ -112,6 +113,8 @@ int main(int argc, char** argv) {
     buttons_update();
     buttons_handle();
 
+    morse_handle();
+    
     //alarm_handle();
 
     //if (!alarm_active) {

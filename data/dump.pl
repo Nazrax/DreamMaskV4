@@ -48,7 +48,13 @@ while(1) {
     }
     $lasttime = $time;
 
-    printf "%010f %03d %03d %02d:%02d:%02d %04d %04d\n", $totalMinutes, $i, $buttons, $hour, $minute, $second + $fractionalSubseconds, ($packet[$i] * 256 + $packet[$i+1]), ($packet[$i+2] * 256 + $packet[$i+3]);
+    my $d1 = $packet[$i] * 256 + $packet[$i+1];
+    my $d2 = $packet[$i+2] * 256 + $packet[$i+3];
+
+    $d1 = $d1 == 65535 ? 1023 : $d1;
+    $d2 = $d2 == 65535 ? 1023 : $d2;
+
+    printf "%010f %03d %03d %02d:%02d:%02f %04d %04d\n", $totalMinutes, $i, $buttons, $hour, $minute, $second + $fractionalSubseconds, $d1, $d2;
     $subsecond++;
     if ($subsecond >= $TICKS_PER_SECOND) {
       $subsecond -= $TICKS_PER_SECOND;

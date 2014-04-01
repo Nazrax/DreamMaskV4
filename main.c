@@ -25,6 +25,8 @@ extern uint16_t adc_min, adc_max;
 // Function prototypes
 static void init_io(void);
 static void buttons_handle(void);
+static void morse_alarm_handle(void);
+
 
 static void init_io() {
   DDRB |= _BV(DDB1) | _BV(DDB2); // LEDs 1 & 2
@@ -73,8 +75,15 @@ int main(int argc, char** argv) {
   led_want(1);
   led_want(2);
   led_handle();
-  _delay_ms(2000);
+
+
+  _delay_ms(1000);
   led_reset();
+  led_handle();
+  _delay_ms(500);
+  led_want(0);
+  led_want(1);
+  led_want(2);
   led_handle();
   
   //PORTB |= _BV(PORTB1) | _BV(PORTB2);
@@ -102,7 +111,13 @@ int main(int argc, char** argv) {
   strcpy_P(serial_out, PSTR("Ready!\r\n> "));
   usart_send();
 
-  flag_want_adc = true;
+  flag_want_adc = false;
+
+
+  led_reset();
+  led_handle();
+
+
 
   while(true) {
     //PORTD ^= _BV(PORTD3);
@@ -113,9 +128,13 @@ int main(int argc, char** argv) {
     buttons_update();
     buttons_handle();
 
+    //alarm_handle();
+
+    morse_alarm_handle();
+
+
     morse_handle();
     
-    //alarm_handle();
 
     //if (!alarm_active) {
     //  led_off(0);
@@ -134,6 +153,19 @@ int main(int argc, char** argv) {
   }
 
   return 0;
+}
+
+static void morse_alarm_handle() {
+  if (clock.subseconds == 1) {
+    if (clock.seconds == 0) {
+      if ((clock.hours == 5 && (clock.minutes == 40 || clock.minutes == 55)) ||
+	  (clock.hours == 6 && clock.minutes == 10) ||
+	  (clock.hours == 7 && (clock.minutes == 0 || clock.minutes == 15 || clock.minutes == 30))) {
+	strcpy_P(morse_out, PSTR("DREAM"));
+	morse_send();
+      }
+    }
+  }
 }
 
 static void buttons_handle() {
@@ -159,7 +191,7 @@ static void buttons_handle() {
     adc_max = 0;
 
     alarm_snooze();
-    led_power = 1;
+    //led_power = 1;
     /*
     if (alarm_active == true) { // || (alarm_time - clock.tseconds) < 300) {
       alarm_time = clock.tseconds + 60*60*10;

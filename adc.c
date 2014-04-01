@@ -15,15 +15,26 @@
 volatile uint16_t flash_buf_ctr;
 
 static inline void adc_start(void);
+static void saveToBuffer(uint16_t);
 
 static volatile bool_t adc_ready;
 static volatile bool_t adc_finished;
+
+static bool_t adc_blocked = false;
 
 uint16_t adc_min, adc_max;
 
 void adc_init(void) {
   ADMUX = _BV(REFS0) | _BV(MUX0);
   ADCSRA =  _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0); // Enable ADC and ADC interrupt; set prescaler to 128
+}
+
+void adc_block(void) {
+  adc_blocked = true;
+}
+
+void adc_unblock(void) {
+  adc_blocked = false;
 }
 
 // Let the LEDs and ADC mux settle out
@@ -79,9 +90,13 @@ void adc_dostuff(void) {
     flag_want_adc = false;
   }
 
-  if (flag_do_adc && !flag_xmodem_sending) {
-    flag_do_adc = false;
-    adc_start();
+  if (adc_blocked) {
+    saveToBuffer(65535);
+  } else {
+    if (flag_do_adc && !flag_xmodem_sending) {
+      flag_do_adc = false;
+      adc_start();
+    }
   }
 
   if (flash_buf_ctr > 255) {
@@ -113,9 +128,11 @@ ISR(ADC_vect) {
     }
   }
 
+  /*
   if (!(ADMUX & _BV(MUX0))) { // Just did ADC1
     led_power = 1.0 * (reading - adc_min) / (adc_max - adc_min) * 180 + 64;
   }
+  */
 
   /*
   if (flag_adc_verbose) {
@@ -131,7 +148,14 @@ ISR(ADC_vect) {
   }
   */
 
+  saveToBuffer(reading);
+
   //  if (flag_want_header && flash_buf_ctr == 0) {
+
+  adc_finished = true;
+}
+
+void saveToBuffer(uint16_t reading) {
   if (flash_buf_ctr == 0) {
     flash_buf[0] = 0xFF;
     flash_buf[1] = 0xEE;
@@ -149,8 +173,6 @@ ISR(ADC_vect) {
   //flash_buf[flash_buf_ctr++] = clock_ticks & 0xFF;
   flash_buf[flash_buf_ctr++] = reading >> 8;
   flash_buf[flash_buf_ctr++] = reading & 0xFF;
-
-  adc_finished = true;
 }
 
 ISR(TIMER0_COMPA_vect) {

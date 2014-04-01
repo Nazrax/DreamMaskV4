@@ -6,7 +6,7 @@ uint8_t led_power = 254;
 #else
 //uint8_t led_power = 7;
 //uint8_t led_power = 1;
-uint8_t led_power = 1;
+uint8_t led_power = 5;
 #endif
 
 bool_t want_led[3];

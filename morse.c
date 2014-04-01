@@ -1,3 +1,4 @@
+#include "adc.h"
 #include "globals.h"
 #include "leds.h"
 #include "morse.h"
@@ -17,6 +18,7 @@ void morse_send(void) {
   morse_tick_ctr = 0;
   morse_element_ctr = 0;
   morse_sending = true;
+  adc_block();
 }
 
 void morse_handle(void) {
@@ -25,37 +27,81 @@ void morse_handle(void) {
 
     if (currentChar == '\0') {
       morse_sending = false;
+      adc_unblock();
       return;
     }
+    
+    uint8_t omcc = morse_char_ctr;
+    uint8_t omtc = morse_tick_ctr;
+    uint8_t omec = morse_element_ctr;
 
     char element = 'x';
-
+    bool_t wantLeds = false;
+    int8_t idx = -1;
     if (currentChar == ' ') {
-      element = 's';
-    } else if (currentChar >= '0' && currentChar <= '9') {
+      // LEDs stay off
+      if (morse_tick_ctr > 2) {
+	morse_tick_ctr = 0;
+	morse_element_ctr = 0;
+	morse_char_ctr++;
+      } else {
+	morse_tick_ctr++;
+      }
     } else {
-      int8_t idx = -1;
+      const char* const * table;
 
-      if (currentChar >= 'A' && currentChar <= 'Z') {
-	idx = currentChar - 'A';
-      } else if (currentChar >= 'a' && currentChar <= 'z') {
-	idx = currentChar - 'a';
+      if (currentChar >= '0' && currentChar <= '9') {
+	idx = currentChar - '0';
+	table = morse_num_table;
+      } else {
+	table = morse_alpha_table;
+	
+	if (currentChar >= 'A' && currentChar <= 'Z') {
+	  idx = currentChar - 'A';
+	} else if (currentChar >= 'a' && currentChar <= 'z') {
+	  idx = currentChar - 'a';
+	}
       }
 
       if (idx >= 0) {
-	char *elements = (char*)pgm_read_word(&(morse_alpha_table[idx]));
+	char *elements = (char*)pgm_read_word(&(table[idx]));
 	element = pgm_read_byte(&elements[morse_element_ctr]);
+
 	if (element == '\0') {
-	  element = 'u';
-	  morse_element_ctr = 0;
-	  morse_char_ctr++;
+	  if (morse_tick_ctr > 0) {
+	    morse_element_ctr = 0;
+	    morse_tick_ctr = 0;
+	    morse_char_ctr++;
+	  } else {
+	    morse_tick_ctr++;
+	  }
+	  element = '*';
 	} else {
-	  morse_element_ctr++;
-	}
+	  uint8_t ticks;
+
+	  if (element == '.') {
+	    ticks = 1;
+	  } else {
+	    ticks = 3;
+	  }
+
+	  if (morse_tick_ctr < ticks) {
+	    wantLeds = true;
+	    morse_tick_ctr++;
+	  } else {
+	    morse_tick_ctr = 0;
+	    morse_element_ctr++;
+	  }
+	} 
       }
     }
 
-    sprintf(serial_out, "%c %d '%c'\r\n", currentChar, (currentChar - 'A'), element);
+    sprintf(serial_out, "%d %d %d %c %c %d\r\n", omcc, omec, omtc, currentChar, element, wantLeds);
+
+    if (wantLeds) {
+      led_want(0);
+      led_want(1);
+    }
     /*
     char* p = serial_out;
     p[0] = currentChar;

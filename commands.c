@@ -72,7 +72,13 @@ void handle_command() {
     p += strlcpy_P(p, cmdresult, 64);
     p += strlcpy_P(p, PSTR("Flash Deselected"), 64);
   } else if (!strncmp_P((char*)serial_in, PSTR("MORSE"), 5)) {
-    strcpy_P(morse_out, PSTR("DREAM"));
+    //strcpy_P(morse_out, PSTR("Dream"));
+    int k=0;
+    while (serial_in[k+5] != '\0') {
+      morse_out[k] = serial_in[k+5];
+      k++;
+    }
+    morse_out[k] = '\0';
     morse_send();
     p += strlcpy_P(p, PSTR("\n\rMorsing"), 64);
   } else if (!strncmp_P((char*)serial_in, PSTR("BUF"), 3)) {

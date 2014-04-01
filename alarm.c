@@ -12,7 +12,7 @@ void alarm_snooze() {
   uint16_t new_time = clock.tseconds + SNOOZE_TIME;
   if (new_time > alarm_time)
     alarm_time = new_time;
-  led_power = 1;
+  //led_power = 1;
 }
 
 void alarm_set_relative(uint8_t hours, uint8_t minutes) {

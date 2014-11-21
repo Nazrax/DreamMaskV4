@@ -7,4 +7,6 @@ void adc_dostuff(void);
 void adc_block(void);
 void adc_unblock(void);
 
+uint16_t adc_voltage(void);
+
 #endif

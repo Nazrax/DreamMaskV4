@@ -37,5 +37,6 @@ void flash_erase(void);
 void flash_write(uint16_t);
 void flash_read(uint16_t);
 void flash_scan(void);
+bool_t flash_verify(uint16_t);
 
 #endif // _FLASH_H_

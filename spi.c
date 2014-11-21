@@ -34,6 +34,7 @@ uint8_t spi_send(uint8_t data) {
 void spi_init(void) {
   DDRB |= _BV(PORTB2) | _BV(PORTB3) | _BV(PORTB5); // /SS, MOSI, and SCK are output
   SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPR0); // Enable SPI, F_CPU / 16
+  //SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPR1); // Enable SPI, F_CPU / 64
   flash_deselect();
 
   strcpy_P(serial_out, PSTR("\r\nSPI initialized\r\n"));

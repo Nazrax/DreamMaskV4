@@ -55,7 +55,17 @@ void usart_dostuff() {
     handle_command();
 
   if (flag_read_flash) {
-    flash_read(flash_addr);
+    bool_t verified = false;
+    while (!verified) {
+      flash_read(flash_addr);
+      verified = flash_verify(flash_addr);
+    }
+    _delay_ms(25);
+    while (!verified) {
+      flash_read(flash_addr);
+      verified = flash_verify(flash_addr);
+    }
+
     flash_addr++;
     flag_read_flash = false;
   }

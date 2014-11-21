@@ -4,6 +4,7 @@
 #include "flash.h"
 #include "alarm.h"
 #include "morse.h"
+#include "adc.h"
 //#include "sensor.h"
 
 #include <avr/io.h>
@@ -71,6 +72,10 @@ void handle_command() {
     flash_deselect();
     p += strlcpy_P(p, cmdresult, 64);
     p += strlcpy_P(p, PSTR("Flash Deselected"), 64);
+  } else if (!strncmp_P((char*)serial_in, PSTR("VOLT"), 4)) {
+    //double v = adc_voltage();
+    uint16_t v = adc_voltage();
+    p += sprintf(p, "\r\nVoltage: %d", v);
   } else if (!strncmp_P((char*)serial_in, PSTR("MORSE"), 5)) {
     //strcpy_P(morse_out, PSTR("Dream"));
     int k=0;

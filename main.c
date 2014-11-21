@@ -53,8 +53,9 @@ static void init_io() {
 
 
 int main(int argc, char** argv) {
+  int old_mcusr = MCUSR;
   MCUSR = 0;
-  //wdt_disable();
+  wdt_disable();
 
   CLKPR = (1<<CLKPCE);        // set Clock Prescaler Change Enable
   CLKPR = _BV(CLKPS0); // Divide by 2, 4 MHz
@@ -68,6 +69,17 @@ int main(int argc, char** argv) {
   init_io();
 
   led_init();
+
+  /*
+  while(1) { 
+    PORTB |= _BV(PORTB1) | _BV(PORTB2);
+    wdt_reset(); 
+    _delay_ms(2000);
+    PORTB &= ~(_BV(PORTB1) | _BV(PORTB2));
+    wdt_reset(); 
+    _delay_ms(2000);
+  }
+  */
 
   // Turn on LEDs
   led_reset();
@@ -98,6 +110,10 @@ int main(int argc, char** argv) {
   flash_init();
   alarm_init();
 
+  sprintf(serial_out, "Voltage is %d\r\n", adc_voltage());
+  usart_send();
+  while (flag_serial_sending);
+
   strcpy_P(serial_out, PSTR("Scanning flash!\r\n"));
   usart_send();
   while (flag_serial_sending);
@@ -108,18 +124,43 @@ int main(int argc, char** argv) {
   usart_send();
   while (flag_serial_sending);
 
-  strcpy_P(serial_out, PSTR("Ready!\r\n> "));
-  usart_send();
-
   flag_want_adc = false;
 
+  if ((old_mcusr & _BV(WDRF)) || (old_mcusr & _BV(BORF))) {
+    strcpy_P(serial_out, PSTR("Enabling ADC: chip was reset\r\n"));
+    usart_send();
+    flag_want_adc = true;
+  } else if (flash_addr > 0) {
+    strcpy_P(serial_out, PSTR("Enabling ADC: flash not empty\r\n"));
+    usart_send();
+    flag_want_adc = true;
+  } else {
+    strcpy_P(serial_out, PSTR("Disabling ADC\r\n"));
+    usart_send();
+    flag_want_adc = false;
+  }
+  while(flag_serial_sending);
+
+  strcpy_P(serial_out, PSTR("Ready!\r\n> "));
+  usart_send();
+  while(flag_serial_sending);
 
   led_reset();
   led_handle();
 
 
-
   while(true) {
+    //sprintf(serial_out, "Main loop: %ld\r\n", clock_ticks);
+    //usart_send();
+    if (flag_did_adc) {
+      flag_did_adc = false;
+      uint16_t left = (flash_buf[flash_buf_ctr - 4] << 8) + flash_buf[flash_buf_ctr - 3];
+		       uint16_t right = (flash_buf[flash_buf_ctr - 2] << 8) + flash_buf[flash_buf_ctr - 1];
+      sprintf(serial_out, "%04ld %d %d %d %d\r\n", clock_ticks, left, right, buttonPresses, led_power);
+      usart_send();
+      while(flag_serial_sending);
+    }
+
     //PORTD ^= _BV(PORTD3);
     clock_update();
 
@@ -134,7 +175,7 @@ int main(int argc, char** argv) {
 
 
     morse_handle();
-    
+
 
     //if (!alarm_active) {
     //  led_off(0);
@@ -142,11 +183,13 @@ int main(int argc, char** argv) {
     //}
 
     adc_dostuff();
+
     usart_dostuff();
 
     led_handle();
 
     buttons_age();
+
 
     wdt_reset();
     power_idle();
@@ -158,11 +201,9 @@ int main(int argc, char** argv) {
 static void morse_alarm_handle() {
   if (clock.subseconds == 1) {
     if (clock.seconds == 0) {
-      if ((clock.hours == 5 && (clock.minutes == 40 || clock.minutes == 55)) ||
-	  (clock.hours == 6 && clock.minutes == 10) ||
-	  (clock.hours == 7 && (clock.minutes == 0 || clock.minutes == 15 || clock.minutes == 30))) {
-	strcpy_P(morse_out, PSTR("DREAM"));
-	morse_send();
+      if (clock.hours >= 5 && clock.minutes % 15 == 0) {
+	strcpy_P(morse_out, PSTR("DREAM DREAM"));
+	//morse_send();
       }
     }
   }

@@ -7,10 +7,13 @@
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/pgmspace.h>
+#include <avr/wdt.h>
 #include <util/delay.h>
 
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 volatile uint16_t flash_buf_ctr;
 
@@ -39,11 +42,12 @@ void adc_unblock(void) {
 
 // Let the LEDs and ADC mux settle out
 static inline void wait_and_adc(void) {
+  /*
   // Turn on timer for delay
   TCNT0 = 0;
   TCCR0A = _BV(WGM01); // CTC Mode
   TCCR0B = _BV(CS00) | _BV(CS01); // clock / 64
-  OCR0A = 39; // Around 1500 interrupts / second
+  OCR0A = 1; // Around 1500 interrupts / second
   TIMSK0 |= _BV(OCIE0A); // Enable CTC interrupt for OCR1A
 
   // Wait for the delay
@@ -52,10 +56,11 @@ static inline void wait_and_adc(void) {
   while(!adc_ready) {
     SMCR = _BV(SE); // Enable sleep mode + Idle
     sleep_cpu();
-  }
-
+  } 
   // Now we've waited about 500us
   // Do the ADC
+  */
+
   adc_finished = false;
   ADCSRA |= _BV(ADEN); // Enable ADC
   while (!adc_finished) {
@@ -65,24 +70,53 @@ static inline void wait_and_adc(void) {
   ADCSRA &= ~(_BV(ADEN)); // Disable ADC
 
   SMCR = 0; // Disable sleep
-  TCCR0A = 0; // Stop the timer
-  TCCR0B = 0; // Stop the timer
+  //TCCR0A = 0; // Stop the timer
+  //TCCR0B = 0; // Stop the timer
 }
 
 static inline void adc_start(void) {
-  PORTC |= _BV(PORTC2) | _BV(PORTC3); // Turn on IR LEDs
+  PORTC |= _BV(PORTC2); // Turn on IR LED 
   led_block(); // Turn off visible LEDs
   led_handle();
 
   ADMUX = _BV(REFS0); // Select first endpoint (ADC0)
   wait_and_adc();
 
+  PORTC &= ~(_BV(PORTC2)); // Turn off IR LED
+  PORTC |= _BV(PORTC3); // Turn on IR LED
+
   ADMUX = _BV(REFS0) | _BV(MUX0); // Select next endpoint (ADC1)
   wait_and_adc();
 
-  PORTC &= ~(_BV(PORTC2) | _BV(PORTC3)); // Turn off IR LEDs
+  PORTC &= ~(_BV(PORTC3)); // Turn off IR LED
   led_unblock(); // Turn on visible LEDs
   led_handle();
+}
+
+uint16_t adc_voltage(void) {
+  int i;
+  cli();
+  uint8_t old_admux = ADMUX;
+  uint8_t old_adcsra = ADCSRA;
+  uint16_t last_reading = 2048;
+
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1); // Internal 1.1v bandgap reference
+  for(i=0; i<100; i++) {
+    ADCSRA = _BV(ADEN) | _BV(ADSC);
+    while (!(ADCSRA & _BV(ADIF)));
+    wdt_reset();
+    _delay_ms(1);
+    if (abs(ADC - last_reading) < 3) {
+      break;
+    }
+    last_reading = ADC;
+  }
+  ADMUX = old_admux;
+  ADCSRA = old_adcsra;
+  uint16_t reading = ADC;
+  sei();
+
+  return reading;
 }
 
 void adc_dostuff(void) {
@@ -106,19 +140,37 @@ void adc_dostuff(void) {
       while (flag_serial_sending);
     }
     flag_want_header = true;
-    flash_write(flash_addr++);
+    bool_t verified = false;
+    int loopCount = 0;
+    while (!verified) {
+      flash_write(flash_addr);
+      verified = flash_verify(flash_addr);
+      if (!verified) {
+	sprintf(serial_out, "Verification %d failed\r\n", loopCount);
+	usart_send();
+	_delay_ms(1);
+	while (flag_serial_sending);
+	loopCount++;
+      }
+    }
+    flash_addr++;
     flash_buf_ctr = 0;
   }
 }
 
 ISR(ADC_vect) {
   uint16_t reading = 1024 - ADC;
+  //static uint16_t lastReading;
+
   if (flag_adc_verbose) {
     if (ADMUX & _BV(MUX0)) { // Just did ADC1
-      sprintf(serial_out, "%s %d %d %d %d %d\r\n", serial_out, reading, buttonPresses, adc_min, adc_max, led_power);
-      usart_send();
+      //sprintf(serial_out, "%s %d %d %d %d %d\r\n", serial_out, reading, buttonPresses, adc_min, adc_max, led_power);
+      //sprintf(serial_out, "%04ld %d %d %d %d %d %d\r\n", clock_ticks, lastReading, reading, buttonPresses, adc_min, adc_max, led_power);
+      //usart_send();
+      flag_did_adc = true;
     } else { // Just did ADC0
-      sprintf(serial_out, "%04ld %d", clock_ticks, reading);
+      //sprintf(serial_out, "foo %04ld %d", clock_ticks, reading);
+      //sprintf(serial_out, "Hello world\r\n");
       if (adc_min > reading) {
 	adc_min = reading;
       }
@@ -127,7 +179,8 @@ ISR(ADC_vect) {
       }
     }
   }
-
+  //lastReading = reading;
+  
   /*
   if (!(ADMUX & _BV(MUX0))) { // Just did ADC1
     led_power = 1.0 * (reading - adc_min) / (adc_max - adc_min) * 180 + 64;

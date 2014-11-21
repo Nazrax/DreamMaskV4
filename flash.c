@@ -174,6 +174,28 @@ void flash_read(uint16_t addr) {
   flash_powerdown();
 }
 
+bool_t flash_verify(uint16_t addr) {
+  int i;
+  flash_powerup();
+
+  flash_select();
+  spi_send(INSTR_READ_DATA);
+  spi_send(addr >> 8);
+  spi_send(addr & 0xFF);
+  spi_send(0);
+
+  for(i=0; i<256; i++) {
+    if (flash_buf[i] != spi_send(DONTCARE)) {
+      return false;
+    }
+    PORTD ^= _BV(PORTD6);
+  }
+  flash_deselect();
+
+  flash_powerdown();
+  return true;
+}
+
 void flash_erase(void) {
   flash_powerup();
   _delay_ms(50);

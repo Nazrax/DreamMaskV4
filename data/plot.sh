@@ -36,6 +36,9 @@ fi
   echo "set output '$OUTFILE'"
  fi
  echo "plot '$INFILE' using 1:3 title 'Buttons' with lines axes x1y2, '' using 1:5 title 'Left' with lines, '' using 1:6 title 'Right' with lines"
+# echo "plot '$INFILE' using 1:3 title 'Buttons' with lines axes x1y2, '' using 1:5 title 'Left' with lines, '' using 1:6 title 'Right' with lines"
+# echo "plot '$INFILE' using 1:3 title 'Buttons' with lines axes x1y2, '' using 1:5 title 'Left' with lines"
 ) | gnuplot -persist 
 
 #eog "$OUTFILE"
+echo $OUTFILE

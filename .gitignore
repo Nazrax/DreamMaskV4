@@ -1,3 +1,5 @@
+\#*
+*~
 .emacs
 *.out
 *.out.map
@@ -8,6 +10,8 @@
 *.capdata
 data/parsed
 data/raw
+data/graphs
+data/*
 *.d
 todo.txt
 Shopping List.ods

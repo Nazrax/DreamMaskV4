@@ -173,7 +173,7 @@ hex: $(HEXTRG)
 
 
 writeflash: hex
-	$(AVRDUDE) -B1.7 -c $(AVRDUDE_PROGRAMMERID)   \
+	$(AVRDUDE) -B2.2 -c $(AVRDUDE_PROGRAMMERID)   \
 	 -p $(PROGRAMMER_MCU) -P $(AVRDUDE_PORT) -e        \
 	 -U flash:w:$(HEXROMTRG)
 

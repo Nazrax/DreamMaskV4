@@ -108,6 +108,7 @@ namespace Lucid_Scribe_Data_Converter
             double hourClicks = 0;
             int tick = 0;
             bool dreaming = false;
+            int ticksSinceDream = 0;
 
             String minute = "";
 
@@ -220,47 +221,55 @@ namespace Lucid_Scribe_Data_Converter
               }
 
               int eyeMovements = 0;
+              int ticksSinceMovement = 32;
 
               historyLeft.Add(Convert.ToInt32(left));
-              if (historyLeft.Count > 500) { historyLeft.RemoveAt(0); }
+              if (historyLeft.Count > 720) { historyLeft.RemoveAt(0); }
 
               for (int i = 10; i < historyLeft.Count; i += 1)
               {
+                ticksSinceMovement++;
                 // Check the last 10 ticks for a jump greater than fifty
                 for (int x = i - 10; x < i; x++)
                 {
-                  if (historyLeft[x] - historyLeft[i] > 50)
+                  if (ticksSinceMovement > 24 && Math.Abs(historyLeft[x] - historyLeft[i]) > 40)
                   {
                     eyeMovements = eyeMovements + 100;
+                    ticksSinceMovement = 0;
                     i += 10;
                     break;
                   }
                 }
               }
 
+              ticksSinceMovement = 32;
+
               historyRight.Add(Convert.ToInt32(right));
-              if (historyRight.Count > 500) { historyRight.RemoveAt(0); }
+              if (historyRight.Count > 720) { historyRight.RemoveAt(0); }
 
               for (int i = 10; i < historyRight.Count; i += 1)
               {
+                ticksSinceMovement++;
                 // Check the last 10 ticks for a jump greater than fifty
                 for (int x = i - 10; x < i; x++)
                 {
-                  if (historyRight[x] - historyRight[i] > 50)
+                  if (ticksSinceMovement > 24 && Math.Abs(historyRight[x] - historyRight[i]) > 40)
                   {
                     eyeMovements = eyeMovements + 100;
+                    ticksSinceMovement = 0;
                     i += 10;
                     break;
                   }
                 }
               }
 
-              if (eyeMovements > 999)
+              if (eyeMovements > 800)
               {
                 eyeMovements = 888;
-                if (!dreaming)
+                if (!dreaming & ticksSinceDream > 512)
                 {
                   dreaming = true;
+                  ticksSinceDream = 0;
                   //alert("Hello dream world");
                   comments += "<Comment Plugin=\"Eye REM\" Type=\"Anthem\" Minute=\"" + minute + "\" Second=\"" + second + "\" Tick=\"" + tick + "\">" + anthems[new Random().Next(anthems.Count-1)] + "</Comment>";
                 }
@@ -275,6 +284,7 @@ namespace Lucid_Scribe_Data_Converter
               minuteRight += Convert.ToInt32(right);
               minuteClicks += Convert.ToInt32(clicks);
               tick++;
+              ticksSinceDream++;
 
               currentMinuteREM += eyeMovements + ",";
               currentMinuteLeft += left.TrimStart('0') + ",";

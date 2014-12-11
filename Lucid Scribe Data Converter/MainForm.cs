@@ -15,6 +15,9 @@ namespace Lucid_Scribe_Data_Converter
 {
   public partial class MainForm : Form
   {
+
+    public Boolean includeKalmanFilters = true;
+
     public MainForm()
     {
       InitializeComponent();
@@ -82,14 +85,18 @@ namespace Lucid_Scribe_Data_Converter
             String currentHour = "-1";
             String currentMinute = "-1";
 
-            String currentLeft = "";
             String currentREM = "";
+            String currentLeft = "";
+            String currentLeftKalman = "";
             String currentRight = "";
+            String currentRightKalman = "";
             String currentClicks = "";
 
-            String currentMinuteLeft = "";
             String currentMinuteREM = "";
+            String currentMinuteLeft = "";
+            String currentMinuteLeftKalman = "";
             String currentMinuteRight = "";
+            String currentMinuteRightKalman = "";
             String currentMinuteClicks = "";
 
             String trimmedMinute = "";
@@ -97,14 +104,18 @@ namespace Lucid_Scribe_Data_Converter
             String comments = "";
             String lastClick = "000";
 
-            int minuteLeft = 0;
             int minuteREM = 0;
+            int minuteLeft = 0;
+            int minuteLeftKalman = 0;
             int minuteRight = 0;
+            int minuteRightKalman = 0;
             int minuteClicks = 0;
 
-            double hourLeft = 0;
             double hourREM = 0;
+            double hourLeft = 0;
+            double hourLeftKalman = 0;
             double hourRight = 0;
+            double hourRightKalman = 0;
             double hourClicks = 0;
             int tick = 0;
             bool dreaming = false;
@@ -114,6 +125,9 @@ namespace Lucid_Scribe_Data_Converter
 
             List<int> historyLeft = new List<int>();
             List<int> historyRight = new List<int>();
+
+            Kalman kalmanLeft = new Kalman();
+            Kalman kalmanRight = new Kalman();
 
             while (!parser.EndOfData)
             {
@@ -145,17 +159,23 @@ namespace Lucid_Scribe_Data_Converter
 
                   minuteREM = minuteREM / tick;
                   minuteLeft = minuteLeft / tick;
+                  minuteLeftKalman = minuteLeftKalman / tick;
                   minuteRight = minuteRight / tick;
+                  minuteRightKalman = minuteRightKalman / tick;
                   minuteClicks = minuteClicks / tick;
 
-                  currentLeft += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeft + "\" >" + currentMinuteLeft + "</M>";
                   currentREM += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteREM + "\" >" + currentMinuteREM + "</M>";
+                  currentLeft += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeft + "\" >" + currentMinuteLeft + "</M>";
+                  currentLeftKalman += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeftKalman + "\" >" + currentMinuteLeftKalman + "</M>";
                   currentRight += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteRight + "\" >" + currentMinuteRight + "</M>";
+                  currentRightKalman += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteRightKalman + "\" >" + currentMinuteRightKalman + "</M>";
                   currentClicks += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteClicks + "\" >" + currentMinuteClicks + "</M>";
 
                   lsd += "\r\n          <Plugin Name=\"Left Eye\" Value=\"" + Convert.ToInt32(hourLeft / 60) + "\">" + currentLeft + "\r\n          </Plugin>";
                   lsd += "\r\n          <Plugin Name=\"Eye REM\" Value=\"" + Convert.ToInt32(hourREM / 60) + "\">" + currentREM + "\r\n          </Plugin>";
+                  if (includeKalmanFilters) lsd += "\r\n          <Plugin Name=\"Left Kalman\" Value=\"" + Convert.ToInt32(hourLeftKalman / 60) + "\">" + currentLeftKalman + "\r\n          </Plugin>";
                   lsd += "\r\n          <Plugin Name=\"Right Eye\" Value=\"" + Convert.ToInt32(hourRight / 60) + "\">" + currentRight + "\r\n          </Plugin>";
+                  if (includeKalmanFilters) lsd += "\r\n          <Plugin Name=\"Right Kalman\" Value=\"" + Convert.ToInt32(hourRightKalman / 60) + "\">" + currentRightKalman + "\r\n          </Plugin>";
                   lsd += "\r\n          <Plugin Name=\"Clicks\" Value=\"" + Convert.ToInt32(hourClicks / 60) + "\">" + currentClicks + "\r\n          </Plugin>";
 
                   lsd += "\r\n      </Plugins>";
@@ -170,14 +190,18 @@ namespace Lucid_Scribe_Data_Converter
                 lsd += "\r\n      <Hour N=\"" + hour + "\">";
                 lsd += "\r\n      <Plugins>";
 
-                currentLeft = "";
                 currentREM = "";
+                currentLeft = "";
+                currentLeftKalman = "";
                 currentRight = "";
+                currentRightKalman = "";
                 currentClicks = "";
 
                 hourREM = 0;
                 hourLeft = 0;
+                hourLeftKalman = 0;
                 hourRight = 0;
+                hourRightKalman = 0;
                 hourClicks = 0;
 
                 currentHour = hour;
@@ -189,31 +213,41 @@ namespace Lucid_Scribe_Data_Converter
                 {
                   minuteREM = minuteREM / tick;
                   minuteLeft = minuteLeft / tick;
+                  minuteLeftKalman = minuteLeftKalman / tick;
                   minuteRight = minuteRight / tick;
+                  minuteRightKalman = minuteRightKalman / tick;
                   minuteClicks = minuteClicks / tick;
 
-                  hourREM += minuteREM ;
-                  hourLeft += minuteLeft ;
+                  hourREM += minuteREM;
+                  hourLeft += minuteLeft;
+                  hourLeftKalman += minuteLeftKalman;
                   hourRight += minuteRight;
+                  hourRightKalman += minuteRightKalman;
                   hourClicks += minuteClicks;
 
                   trimmedMinute = currentMinute.TrimStart('0');
                   if (trimmedMinute == "") trimmedMinute = "0";
 
-                  currentLeft += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeft + "\" >" + currentMinuteLeft + "</M>";
                   currentREM += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteREM + "\" >" + currentMinuteREM + "</M>";
+                  currentLeft += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeft + "\" >" + currentMinuteLeft + "</M>";
+                  currentLeftKalman += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeftKalman + "\" >" + currentMinuteLeftKalman + "</M>";
                   currentRight += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteRight + "\" >" + currentMinuteRight + "</M>";
+                  currentRightKalman += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteRightKalman + "\" >" + currentMinuteRightKalman + "</M>";
                   currentClicks += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteClicks + "\" >" + currentMinuteClicks + "</M>";
                 }
 
                 currentMinuteREM = "";
                 currentMinuteLeft = "";
+                currentMinuteLeftKalman = "";
                 currentMinuteRight = "";
+                currentMinuteRightKalman = "";
                 currentMinuteClicks = "";
 
                 minuteREM = 0;
                 minuteLeft = 0;
+                minuteLeftKalman = 0;
                 minuteRight = 0;
+                minuteRightKalman = 0;
                 minuteClicks = 0;
 
                 currentMinute = minute;
@@ -279,16 +313,24 @@ namespace Lucid_Scribe_Data_Converter
                 dreaming = false;
               }
 
+
+              int kalmanLeftValue = kalmanLeft.Update(Convert.ToInt32(left));
+              int kalmanRightValue = kalmanRight.Update(Convert.ToInt32(right));
+
               minuteREM += eyeMovements;
               minuteLeft += Convert.ToInt32(left);
+              minuteLeftKalman += kalmanLeftValue;
               minuteRight += Convert.ToInt32(right);
+              minuteRightKalman += kalmanRightValue;
               minuteClicks += Convert.ToInt32(clicks);
               tick++;
               ticksSinceDream++;
 
               currentMinuteREM += eyeMovements + ",";
               currentMinuteLeft += left.TrimStart('0') + ",";
+              currentMinuteLeftKalman += kalmanLeftValue + ",";
               currentMinuteRight += right.TrimStart('0') + ",";
+              currentMinuteRightKalman += kalmanRightValue + ",";
               currentMinuteClicks += clicks + ",";
 
               if (lastClick != clicks)
@@ -306,17 +348,23 @@ namespace Lucid_Scribe_Data_Converter
 
             minuteREM = minuteREM / tick;
             minuteLeft = minuteLeft / tick;
+            minuteLeftKalman = minuteLeftKalman / tick;
             minuteRight = minuteRight / tick;
+            minuteRightKalman = minuteRightKalman / tick;
             minuteClicks = minuteClicks / tick;
 
             currentREM += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteREM + "\" >" + currentMinuteREM + "</M>";
             currentLeft += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeft + "\" >" + currentMinuteLeft + "</M>";
+            currentLeftKalman += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteLeftKalman + "\" >" + currentMinuteLeftKalman + "</M>";
             currentRight += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteRight + "\" >" + currentMinuteRight + "</M>";
+            currentRightKalman += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteRightKalman + "\" >" + currentMinuteRightKalman + "</M>";
             currentClicks += "\r\n            <M N=\"" + trimmedMinute + "\" V=\"" + minuteClicks + "\" >" + currentMinuteClicks + "</M>";
 
             lsd += "\r\n          <Plugin Name=\"Left Eye\" Value=\"" + Convert.ToInt32(hourLeft / 60) + "\">" + currentLeft + "\r\n          </Plugin>";
             lsd += "\r\n          <Plugin Name=\"Eye REM\" Value=\"" + Convert.ToInt32(hourREM / 60) + "\">" + currentREM + "\r\n          </Plugin>";
+            if (includeKalmanFilters) lsd += "\r\n          <Plugin Name=\"Left Kalman\" Value=\"" + Convert.ToInt32(hourLeftKalman / 60) + "\">" + currentLeftKalman + "\r\n          </Plugin>";
             lsd += "\r\n          <Plugin Name=\"Right Eye\" Value=\"" + Convert.ToInt32(hourRight / 60) + "\">" + currentRight + "\r\n          </Plugin>";
+            if (includeKalmanFilters) lsd += "\r\n          <Plugin Name=\"Right Kalman\" Value=\"" + Convert.ToInt32(hourRightKalman / 60) + "\">" + currentRightKalman + "\r\n          </Plugin>";
             lsd += "\r\n          <Plugin Name=\"Clicks\" Value=\"" + Convert.ToInt32(hourClicks / 60) + "\">" + currentClicks + "\r\n          </Plugin>";
 
             lsd += "\r\n          </Plugins>";

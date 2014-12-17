@@ -3,6 +3,7 @@
 #include "flash.h"
 #include "serial.h"
 #include "leds.h"
+#include "detector.h"
 
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -25,7 +26,7 @@ static volatile bool_t adc_finished;
 
 static bool_t adc_blocked = false;
 
-uint16_t adc_min, adc_max;
+uint16_t adc_min, adc_max, left_reading, right_reading;
 
 void adc_init(void) {
   ADMUX = _BV(REFS0) | _BV(MUX0);
@@ -91,6 +92,8 @@ static inline void adc_start(void) {
   PORTC &= ~(_BV(PORTC3)); // Turn off IR LED
   led_unblock(); // Turn on visible LEDs
   led_handle();
+
+  detector_update(left_reading, right_reading);
 }
 
 uint16_t adc_voltage(void) {
@@ -167,6 +170,7 @@ ISR(ADC_vect) {
       //sprintf(serial_out, "%s %d %d %d %d %d\r\n", serial_out, reading, buttonPresses, adc_min, adc_max, led_power);
       //sprintf(serial_out, "%04ld %d %d %d %d %d %d\r\n", clock_ticks, lastReading, reading, buttonPresses, adc_min, adc_max, led_power);
       //usart_send();
+      right_reading = reading;
       flag_did_adc = true;
     } else { // Just did ADC0
       //sprintf(serial_out, "foo %04ld %d", clock_ticks, reading);
@@ -177,6 +181,7 @@ ISR(ADC_vect) {
       if (adc_max < reading) {
 	adc_max = reading;
       }
+      left_reading = reading;
     }
   }
   //lastReading = reading;

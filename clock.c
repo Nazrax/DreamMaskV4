@@ -4,7 +4,7 @@
 #include <avr/interrupt.h>
 
 volatile uint32_t clock_ticks;
-clock_t clock;
+myclock_t clock;
 
 // The clock uses timer 2 in async mode
 void clock_init() {

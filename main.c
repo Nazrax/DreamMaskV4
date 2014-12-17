@@ -11,6 +11,7 @@
 #include "alarm.h"
 #include "leds.h"
 #include "morse.h"
+#include "detector.h"
 
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
@@ -69,6 +70,7 @@ int main(int argc, char** argv) {
   init_io();
 
   led_init();
+  detector_init();
 
   /*
   while(1) { 

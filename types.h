@@ -1,6 +1,8 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
+#include <stdint.h>
+
 typedef enum {false, true} bool_t;
 typedef enum { DOWN, UP } button_state_t;
 typedef enum { PA, PB, PC, PD } button_port_t;
@@ -10,7 +12,7 @@ typedef struct {
   unsigned char minutes:6;
   unsigned char hours:5;
   uint16_t tseconds;
-} clock_t;
+} myclock_t;
 
 typedef struct
 {

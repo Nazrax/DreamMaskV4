@@ -63,7 +63,7 @@
 #define flag_did_adc REGISTER_BIT(FLAG_DID_ADC)
 
 // Clock stuff
-extern clock_t clock;
+extern myclock_t clock;
 extern volatile uint32_t clock_ticks;
 
 // Flash stuff

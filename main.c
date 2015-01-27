@@ -22,6 +22,9 @@
 #include <stdio.h>
 
 extern uint16_t adc_min, adc_max;
+extern reading_data_t *leftData, *rightData;
+extern uint16_t left_reading, right_reading;
+
 
 // Function prototypes
 static void init_io(void);
@@ -154,11 +157,29 @@ int main(int argc, char** argv) {
   while(true) {
     //sprintf(serial_out, "Main loop: %ld\r\n", clock_ticks);
     //usart_send();
-    if (flag_did_adc) {
+    if (flag_did_adc && flag_clock_ticked) {
       flag_did_adc = false;
+      flag_clock_ticked = false;
+
       uint16_t left = (flash_buf[flash_buf_ctr - 4] << 8) + flash_buf[flash_buf_ctr - 3];
-		       uint16_t right = (flash_buf[flash_buf_ctr - 2] << 8) + flash_buf[flash_buf_ctr - 1];
-      sprintf(serial_out, "%04ld %d %d %d %d\r\n", clock_ticks, left, right, buttonPresses, led_power);
+      uint16_t right = (flash_buf[flash_buf_ctr - 2] << 8) + flash_buf[flash_buf_ctr - 1];
+      detector_update(left_reading, right_reading);
+      sprintf(serial_out, "%04ld %04d %04d %04d %04d %04d %04d %04ld %04ld %d %d %d %04d %04d\r\n",
+              clock_ticks,
+              left_reading,
+              right_reading, 
+              leftData->lastMovement, 
+              rightData->lastMovement, 
+              leftData->threshold,
+              rightData->threshold,
+              leftData->movementCount,
+              rightData->movementCount,
+              leftData->dreaming,
+              rightData->dreaming,
+              (left_reading >> 8) | (leftData->dreaming << 3) | (rightData->dreaming << 4) | (buttons[0].current << 5) | (buttons[1].current << 6),
+              left,
+              right
+              );
       usart_send();
       while(flag_serial_sending);
     }

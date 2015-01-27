@@ -1,5 +1,6 @@
 #include "globals.h"
 
+#include "buttons.h"
 #include "flash.h"
 #include "serial.h"
 #include "leds.h"
@@ -15,6 +16,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+extern reading_data_t *leftData, *rightData;
 
 volatile uint16_t flash_buf_ctr;
 
@@ -229,7 +232,7 @@ void saveToBuffer(uint16_t reading) {
 
   //flash_buf[flash_buf_ctr++] = clock_ticks >> 8;
   //flash_buf[flash_buf_ctr++] = clock_ticks & 0xFF;
-  flash_buf[flash_buf_ctr++] = reading >> 8;
+  flash_buf[flash_buf_ctr++] = (reading >> 8) | (leftData->dreaming << 3) | (rightData->dreaming << 4) | (buttons[0].current << 5) | (buttons[1].current << 6);
   flash_buf[flash_buf_ctr++] = reading & 0xFF;
 }
 

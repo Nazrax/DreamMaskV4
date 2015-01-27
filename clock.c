@@ -44,6 +44,7 @@ void clock_update() {
 // The clock
 ISR(TIMER2_COMPA_vect) {
   clock_ticks++;
+  flag_clock_ticked = true;
 
   //  if (clock_ticks % 4 == 0) {
   //PORTB ^= _BV(PORTB2);

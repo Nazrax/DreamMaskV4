@@ -22,6 +22,8 @@ void morse_send(void) {
 }
 
 void morse_handle(void) {
+  led_unblock();
+
   if(morse_sending) {
     char currentChar = morse_out[morse_char_ctr];
 

@@ -40,6 +40,7 @@
 // GPIOR2
 #define ALARM_ACTIVE GPIOR2, 0
 #define FLAG_DID_ADC GPIOR2, 1
+#define FLAG_CLOCK_TICKED GPIOR2, 2
 
 // Flags
 #define flag_serial_sending REGISTER_BIT(SERIAL_SENDING)
@@ -61,6 +62,7 @@
 
 #define alarm_active REGISTER_BIT(ALARM_ACTIVE)
 #define flag_did_adc REGISTER_BIT(FLAG_DID_ADC)
+#define flag_clock_ticked REGISTER_BIT(FLAG_CLOCK_TICKED)
 
 // Clock stuff
 extern myclock_t clock;

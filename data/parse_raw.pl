@@ -48,13 +48,20 @@ while(1) {
     }
     $lasttime = $time;
 
-    my $d1 = $packet[$i] * 256 + $packet[$i+1];
-    my $d2 = $packet[$i+2] * 256 + $packet[$i+3];
+    my $d1 = ($packet[$i] & 3) * 256 + $packet[$i+1];
+    my $d2 = ($packet[$i+2]) * 256 + $packet[$i+3];
 
-    $d1 = $d1 == 65535 ? 1023 : $d1;
-    $d2 = $d2 == 65535 ? 1023 : $d2;
+    $d1 = ($d1 == 65535) ? 1023 : $d1;
+    $d2 = ($d2 == 65535) ? 1023 : $d2;
 
-    printf "%010f %03d %03d %02d:%02d:%02f %04d %04d\n", $totalMinutes, $i, $buttons, $hour, $minute, $second + $fractionalSubseconds, $d1, $d2;
+    #leftData->dreaming << 3 | rightData->dreaming << 4 | pressed(&buttons[0]) << 5 | pressed(&buttons[1]) << 6
+
+    my $leftDreaming = $packet[$i] & 8;
+    my $rightDreaming = $packet[$i] & 16;
+    my $leftButton = $packet[$i] & 32;
+    my $rightButton = $packet[$i] & 64;
+
+    printf "%010f %03d %03d %02d:%02d:%09f %04d %04d %d %d %d %d\n", $totalMinutes, $i, $buttons, $hour, $minute, $second + $fractionalSubseconds, $d1, $d2, $leftButton, $rightButton, $leftDreaming, $rightDreaming;
     $subsecond++;
     if ($subsecond >= $TICKS_PER_SECOND) {
       $subsecond -= $TICKS_PER_SECOND;

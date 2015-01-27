@@ -159,6 +159,9 @@ GENASMFILES=$(filter %.s, $(OBJDEPS:.o=.s))
 
 .PHONY: writeflash clean stats gdbinit stats install fuses program
 
+detectortest: detectortest.c ringbuffer.c detector.c ringbuffer.h detector.h
+	gcc -o dt detectortest.c ringbuffer.c detector.c
+
 # Make targets:
 # all, disasm, stats, hex, writeflash/install, clean
 all: $(TRG)

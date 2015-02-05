@@ -163,8 +163,8 @@ int main(int argc, char** argv) {
 
       uint16_t left = (flash_buf[flash_buf_ctr - 4] << 8) + flash_buf[flash_buf_ctr - 3];
       uint16_t right = (flash_buf[flash_buf_ctr - 2] << 8) + flash_buf[flash_buf_ctr - 1];
-      detector_update(left_reading, right_reading);
-      sprintf(serial_out, "%04ld %04d %04d %04d %04d %04d %04d %04ld %04ld %d %d %d %04d %04d\r\n",
+      
+      sprintf(serial_out, "T%04ld LR%04d RR%04d LM%04d RM%04d LT%04d RT%04d LC%04ld RC%04ld LD%d RD%d %d %04d %04d\r\n",
               clock_ticks,
               left_reading,
               right_reading, 

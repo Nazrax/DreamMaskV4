@@ -2,15 +2,20 @@
 #include "spi.h"
 #include "flash.h"
 #include "serial.h"
+#include "clock.h"
 
 #include <stdio.h>
 #include <util/delay.h>
 #include <avr/wdt.h>
 #include <avr/pgmspace.h>
 
+#define MOD_ADLER 65521
+
 uint8_t flash_buf[256];
 uint16_t flash_addr;
 volatile uint16_t flash_buf_ctr;
+
+bool_t flag_flash_power_hold = false;
 
 void flash_enable_write(void);
 void flash_wait_for_wel(void);
@@ -102,6 +107,52 @@ void flash_scan() {
   flash_powerdown();
 }
 
+uint32_t flash_adler32(void) {
+  uint32_t a = 1, b = 0;
+  uint16_t i;
+
+  flash_powerup();
+  flash_power_hold(1);
+
+  for(flash_addr=0; flash_addr < 4096; flash_addr++) {
+    bool_t verified = false;
+    while (!verified) {
+      flash_fast_read(flash_addr);
+      verified = flash_verify(flash_addr);
+      if (!verified)
+	_delay_ms(25);
+      /*
+      sprintf(serial_out, "%u %d\r\n", flash_addr, verified);
+      usart_send();
+      while (flag_serial_sending);
+      */
+    }
+
+    if (flash_buf[1] == 0xFF)
+      break;
+
+    for(i=0; i<256; i++) {
+      a = (a + flash_buf[i]) % MOD_ADLER;
+      b = (b + a) % MOD_ADLER;
+    }
+
+    /*
+      sprintf(serial_out, "%u %lu %lu\r\n", flash_addr, a, b);
+      usart_send();
+      while (flag_serial_sending);
+    */
+
+    wdt_reset();
+    clock_update();
+  }
+
+  flash_power_hold(0);
+  flash_powerdown();
+
+  return (b << 16) | a;
+}
+
+
 void flash_enable_write(void) {
   flash_wait_for_idle();
 
@@ -171,6 +222,25 @@ void flash_read(uint16_t addr) {
   }
   flash_deselect();
 
+  flash_powerdown();
+}
+
+void flash_fast_read(uint16_t addr) {
+  int i;
+
+  flash_powerup();
+  flash_select();
+  spi_send(INSTR_FAST_READ);
+  spi_send(addr >> 8);
+  spi_send(addr & 0xFF);
+  spi_send(0);
+  spi_send(DONTCARE);
+
+  for(i=0; i<256; i++) {
+    flash_buf[i] = spi_send(DONTCARE);
+    PORTD ^= _BV(PORTD6);
+  }
+  flash_deselect();
   flash_powerdown();
 }
 

@@ -18,6 +18,8 @@
 #include <stdlib.h>
 
 extern reading_data_t *leftData, *rightData;
+extern bool_t morse_sending;
+extern bool_t want_led;
 
 volatile uint16_t flash_buf_ctr;
 
@@ -97,6 +99,8 @@ static inline void adc_start(void) {
   led_handle();
 
   detector_update(left_reading, right_reading);
+  saveToBuffer(left_reading);
+  saveToBuffer(right_reading);
 }
 
 uint16_t adc_voltage(void) {
@@ -150,6 +154,7 @@ void adc_dostuff(void) {
     int loopCount = 0;
     while (!verified) {
       flash_write(flash_addr);
+      _delay_ms(1);
       verified = flash_verify(flash_addr);
       if (!verified) {
 	sprintf(serial_out, "Verification %d failed\r\n", loopCount);
@@ -168,24 +173,22 @@ ISR(ADC_vect) {
   uint16_t reading = 1024 - ADC;
   //static uint16_t lastReading;
 
-  if (flag_adc_verbose) {
-    if (ADMUX & _BV(MUX0)) { // Just did ADC1
-      //sprintf(serial_out, "%s %d %d %d %d %d\r\n", serial_out, reading, buttonPresses, adc_min, adc_max, led_power);
-      //sprintf(serial_out, "%04ld %d %d %d %d %d %d\r\n", clock_ticks, lastReading, reading, buttonPresses, adc_min, adc_max, led_power);
-      //usart_send();
-      right_reading = reading;
-      flag_did_adc = true;
-    } else { // Just did ADC0
-      //sprintf(serial_out, "foo %04ld %d", clock_ticks, reading);
-      //sprintf(serial_out, "Hello world\r\n");
-      if (adc_min > reading) {
-	adc_min = reading;
-      }
-      if (adc_max < reading) {
-	adc_max = reading;
-      }
-      left_reading = reading;
+  if (ADMUX & _BV(MUX0)) { // Just did ADC1
+    //sprintf(serial_out, "%s %d %d %d %d %d\r\n", serial_out, reading, buttonPresses, adc_min, adc_max, led_power);
+    //sprintf(serial_out, "%04ld %d %d %d %d %d %d\r\n", clock_ticks, lastReading, reading, buttonPresses, adc_min, adc_max, led_power);
+    //usart_send();
+    right_reading = reading;
+    flag_did_adc = true;
+  } else { // Just did ADC0
+    //sprintf(serial_out, "foo %04ld %d", clock_ticks, reading);
+    //sprintf(serial_out, "Hello world\r\n");
+    if (adc_min > reading) {
+      adc_min = reading;
     }
+    if (adc_max < reading) {
+      adc_max = reading;
+    }
+    left_reading = reading;
   }
   //lastReading = reading;
   
@@ -209,8 +212,6 @@ ISR(ADC_vect) {
   }
   */
 
-  saveToBuffer(reading);
-
   //  if (flag_want_header && flash_buf_ctr == 0) {
 
   adc_finished = true;
@@ -230,10 +231,35 @@ void saveToBuffer(uint16_t reading) {
     flag_want_header = false;
   }
 
+  /* uint16_t threshold; */
+  /* uint32_t movementSum; */
+  /* uint32_t movementCount; */
+  /* uint16_t lastMovement; */
+  /* uint16_t ticksSinceMovement; */
+  /* uint8_t cooldown; */
+
+
   //flash_buf[flash_buf_ctr++] = clock_ticks >> 8;
   //flash_buf[flash_buf_ctr++] = clock_ticks & 0xFF;
-  flash_buf[flash_buf_ctr++] = (reading >> 8) | (leftData->dreaming << 3) | (rightData->dreaming << 4) | (buttons[0].current << 5) | (buttons[1].current << 6);
+  flash_buf[flash_buf_ctr++] = (reading >> 8) | (want_led << 2) | (leftData->dreaming << 3) | (rightData->dreaming << 4) | (buttons[0].current << 5) | (buttons[1].current << 6) | (morse_sending << 7);
   flash_buf[flash_buf_ctr++] = reading & 0xFF;
+
+  /*
+  flash_buf[flash_buf_ctr++] = data->threshold >> 8;
+  flash_buf[flash_buf_ctr++] = data->threshold & 0xFF;
+
+  flash_buf[flash_buf_ctr++] = (data->movementSum >> 8) & 0xFF;
+  flash_buf[flash_buf_ctr++] = data->movementSum & 0xFF;
+
+  flash_buf[flash_buf_ctr++] = ((data->movementCount >> 8) & 0x0F) | (data->cooldown << 4);
+  flash_buf[flash_buf_ctr++] = data->movementCount & 0xFF;
+
+  flash_buf[flash_buf_ctr++] = data->lastMovement >> 8;
+  flash_buf[flash_buf_ctr++] = data->lastMovement & 0xFF;
+
+  flash_buf[flash_buf_ctr++] = data->ticksSinceMovement >> 8;
+  flash_buf[flash_buf_ctr++] = data->ticksSinceMovement & 0xFF;
+  */
 }
 
 ISR(TIMER0_COMPA_vect) {

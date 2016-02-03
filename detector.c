@@ -47,8 +47,8 @@ void detector_update(uint16_t leftReading, uint16_t rightReading) {
 }
 
 void update_movements(reading_data_t *data, uint16_t reading) {
-  ringbuffer_append_uint16(data->readingBuffer, reading);
   uint16_t movement = calculate_movement(data->readingBuffer, reading);
+  bool_t foundMovement = false;
   data->lastMovement = movement;
   data->movementSum += movement;
   if (data->cooldown > 0) {
@@ -56,17 +56,22 @@ void update_movements(reading_data_t *data, uint16_t reading) {
   } else {
     if (movement > data->threshold) {
       data->movementCount++;
-      data->cooldown = DETECTOR_MOVEMENT_DETECTION_WINDOW-1;
+      //data->cooldown = DETECTOR_MOVEMENT_DETECTION_WINDOW-1; // Algorithm tweak
+      ringbuffer_clear_uint16(data->readingBuffer); // Algorithm tweak
       data->ticksSinceMovement = 0;
+      foundMovement = true;
     }
+  }
+  ringbuffer_append_uint16(data->readingBuffer, reading);
+
+  if (!foundMovement) {
+    data->ticksSinceMovement++;
   }
 
   if (data->movementCount > 0 && data->ticksSinceMovement > DETECTOR_TICK_TIMEOUT) {
     data->movementCount = 0;
   }
   data->dreaming = (data->movementCount > DETECTOR_REM_THRESHOLD);
-
-  data->ticksSinceMovement++;
 }
 
 void update_threshold(reading_data_t *data) {
@@ -88,11 +93,17 @@ void update_threshold(reading_data_t *data) {
 }
 
 uint16_t calculate_movement(ringbuffer_uint16_t* ringbuffer, uint16_t reading) {
-  uint8_t i;
+  uint8_t i, ri;
   uint16_t maxMovement = 0;
 
-  for(i=0; i<ringbuffer->size; i++) {
-    uint16_t movement = abs(ringbuffer->data[i] - reading);
+  for(i=0; i<ringbuffer->count; i++) {
+    if (ringbuffer->size == ringbuffer->count) {
+      ri = (i + ringbuffer->head) % ringbuffer->size;
+    } else {
+      ri = i;
+    }
+
+    uint16_t movement = abs(ringbuffer->data[ri] - reading);
 
     if (movement > maxMovement) {
       maxMovement = movement;

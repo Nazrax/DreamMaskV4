@@ -60,8 +60,9 @@ void usart_dostuff() {
       flash_read(flash_addr);
       verified = flash_verify(flash_addr);
     }
-    _delay_ms(25);
+
     while (!verified) {
+      _delay_ms(25);
       flash_read(flash_addr);
       verified = flash_verify(flash_addr);
     }

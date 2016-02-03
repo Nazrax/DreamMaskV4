@@ -10,7 +10,7 @@
 #include <string.h>
 
 static uint8_t morse_char_ctr, morse_tick_ctr, morse_element_ctr;
-static bool_t morse_sending = false;
+bool_t morse_sending = false;
 char morse_out[64];
 
 void morse_send(void) {
@@ -18,18 +18,18 @@ void morse_send(void) {
   morse_tick_ctr = 0;
   morse_element_ctr = 0;
   morse_sending = true;
-  adc_block();
+  //adc_block();
 }
 
 void morse_handle(void) {
-  led_unblock();
+  //led_unblock();
 
   if(morse_sending) {
     char currentChar = morse_out[morse_char_ctr];
 
     if (currentChar == '\0') {
       morse_sending = false;
-      adc_unblock();
+      //adc_unblock();
       return;
     }
     

@@ -76,6 +76,20 @@ void handle_command() {
     //double v = adc_voltage();
     uint16_t v = adc_voltage();
     p += sprintf(p, "\r\nVoltage: %d", v);
+  } else if (!strncmp_P((char*)serial_in, PSTR("SUM"), 4)) {
+    uint32_t sum;
+
+    handle_time();
+    usart_send();
+    while (flag_serial_sending);
+
+    sum = flash_adler32();
+    sprintf(serial_out, "\r\nAdler32: %lu", sum);
+    usart_send();
+    while (flag_serial_sending);
+
+    p = serial_out;
+    handle_time();
   } else if (!strncmp_P((char*)serial_in, PSTR("MORSE"), 5)) {
     //strcpy_P(morse_out, PSTR("Dream"));
     int k=0;
@@ -109,14 +123,7 @@ void handle_command() {
 }
 
 static void handle_time() {
-  if (serial_in_ctr == 4) {
-    uint8_t timepatlen = strlen_P(timepattern);
-    char pattern[timepatlen+1];
-    strcpy_P(pattern, timepattern);
-    
-    p += strlcpy_P(p, timeisnow, 64);
-    p += sprintf(p, pattern, clock.hours, clock.minutes, clock.seconds);
-  } else if (serial_in_ctr == 10) {
+  if (serial_in_ctr == 10) {
     clock.hours = (serial_in[4] - '0') * 10 + (serial_in[5] - '0');
     clock.minutes = (serial_in[6] - '0') * 10 + (serial_in[7] - '0');
     clock.seconds = (serial_in[8] - '0') * 10 + (serial_in[9] - '0');
@@ -124,7 +131,12 @@ static void handle_time() {
     p += strlcpy_P(p, executed, 64);
     p += strlcpy_P(p, PSTR("TIME"), 64);
   } else {
-    p += strlcpy_P(p, badinput, 64);
+    uint8_t timepatlen = strlen_P(timepattern);
+    char pattern[timepatlen+1];
+    strcpy_P(pattern, timepattern);
+    
+    p += strlcpy_P(p, timeisnow, 64);
+    p += sprintf(p, pattern, clock.hours, clock.minutes, clock.seconds);
   }
 }
 

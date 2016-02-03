@@ -1,17 +1,17 @@
 #include "globals.h"
 
 #include "adc.h"
-#include "buttons.h"
-#include "power.h"
-#include "serial.h"
-#include "clock.h"
-#include "spi.h"
-#include "flash.h"
-#include "calib_32kHz.h"
 #include "alarm.h"
+#include "buttons.h"
+#include "calib_32kHz.h"
+#include "clock.h"
+#include "detector.h"
+#include "flash.h"
 #include "leds.h"
 #include "morse.h"
-#include "detector.h"
+#include "power.h"
+#include "serial.h"
+#include "spi.h"
 
 #include <avr/wdt.h>
 #include <avr/interrupt.h>
@@ -29,8 +29,6 @@ extern uint16_t left_reading, right_reading;
 // Function prototypes
 static void init_io(void);
 static void buttons_handle(void);
-static void morse_alarm_handle(void);
-
 
 static void init_io() {
   DDRB |= _BV(DDB1) | _BV(DDB2); // LEDs 1 & 2
@@ -56,7 +54,7 @@ static void init_io() {
 }
 
 
-int main(int argc, char** argv) {
+int main(void) {
   int old_mcusr = MCUSR;
   MCUSR = 0;
   wdt_disable();
@@ -154,31 +152,38 @@ int main(int argc, char** argv) {
   led_handle();
 
 
+  bool_t dreaming = false;
+  char changeBuf[8];
+  changeBuf[0] = '\0';
+
   while(true) {
     //sprintf(serial_out, "Main loop: %ld\r\n", clock_ticks);
     //usart_send();
-    if (flag_did_adc && flag_clock_ticked) {
+    if (!dreaming && (leftData->dreaming || rightData->dreaming)) {
+      strcpy_P(changeBuf, PSTR("started\0"));
+    } else if (dreaming && !leftData->dreaming && !rightData->dreaming) {
+      strcpy_P(changeBuf, PSTR("stopped\0"));
+    } else {
+      changeBuf[0] = '\0';
+    }
+    dreaming = leftData->dreaming || rightData->dreaming;
+
+    if (flag_adc_verbose && flag_did_adc && flag_clock_ticked) {
       flag_did_adc = false;
       flag_clock_ticked = false;
 
-      uint16_t left = (flash_buf[flash_buf_ctr - 4] << 8) + flash_buf[flash_buf_ctr - 3];
-      uint16_t right = (flash_buf[flash_buf_ctr - 2] << 8) + flash_buf[flash_buf_ctr - 1];
+      //uint16_t left = (flash_buf[flash_buf_ctr - 4] << 8) + flash_buf[flash_buf_ctr - 3];
+      //uint16_t right = (flash_buf[flash_buf_ctr - 2] << 8) + flash_buf[flash_buf_ctr - 1];
       
-      sprintf(serial_out, "T%04ld LR%04d RR%04d LM%04d RM%04d LT%04d RT%04d LC%04ld RC%04ld LD%d RD%d %d %04d %04d\r\n",
+      sprintf(serial_out, "%04ld LR:%04d RR:%04d LC:%04ld RC:%04ld LD:%d RD:%d %s\n\r",
               clock_ticks,
               left_reading,
-              right_reading, 
-              leftData->lastMovement, 
-              rightData->lastMovement, 
-              leftData->threshold,
-              rightData->threshold,
+              right_reading,
               leftData->movementCount,
               rightData->movementCount,
               leftData->dreaming,
               rightData->dreaming,
-              (left_reading >> 8) | (leftData->dreaming << 3) | (rightData->dreaming << 4) | (buttons[0].current << 5) | (buttons[1].current << 6),
-              left,
-              right
+              changeBuf
               );
       usart_send();
       while(flag_serial_sending);
@@ -192,10 +197,7 @@ int main(int argc, char** argv) {
     buttons_update();
     buttons_handle();
 
-    //alarm_handle();
-
-    morse_alarm_handle();
-
+    alarm_handle();
 
     morse_handle();
 
@@ -221,6 +223,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 
+/*
 static void morse_alarm_handle() {
   if (clock.subseconds == 1) {
     if (clock.seconds == 0) {
@@ -231,6 +234,7 @@ static void morse_alarm_handle() {
     }
   }
 }
+*/
 
 static void buttons_handle() {
   if (!flag_want_adc && clock.tseconds > 1 && (pressed(&buttons[0]) || pressed(&buttons[1]))) {
@@ -254,7 +258,7 @@ static void buttons_handle() {
     adc_min = 1023;
     adc_max = 0;
 
-    alarm_snooze();
+    alarm_snooze(0);
     //led_power = 1;
     /*
     if (alarm_active == true) { // || (alarm_time - clock.tseconds) < 300) {
